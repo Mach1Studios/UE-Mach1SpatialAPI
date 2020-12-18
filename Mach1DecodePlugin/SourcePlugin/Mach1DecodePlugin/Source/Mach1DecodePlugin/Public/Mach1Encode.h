@@ -61,7 +61,12 @@ public:
 	void setElevationDegrees(float elevationFromMinus90to90);
 	void setElevationRadians(float elevationFromMinusHalfPItoHalfPI);
 
+	void setPannerMode(enum Mach1EncodePannerMode pannerMode);
+#if __cplusplus > 201103L
+	[[deprecated("setIsotropicEncode is deprecated, please use setPannerMode instead")]]
+#endif
 	void setIsotropicEncode(bool isotropicEncode);
+	void setFrontSurroundPerspective(bool frontSurroundPerspective);
 
 #if __cplusplus > 201103L
 	[[deprecated("setStereoRotate is deprecated due to ambiguity of use, please use setOrbitRotation0to1, setOrbitRotationDegrees or setOrbitRotationRadians instead")]]
@@ -87,10 +92,16 @@ inline void Mach1Encode::encodeBuffer(std::vector<std::vector<T>>* inBuffer, std
 	float gain = 0;
 	for (size_t c = 0; c < gains.size(); c++) {
 		for (size_t k = 0; k < gains[c].size(); k++) {
+			T* out = outBuffer->operator[](k * getInputChannelsCount() + c).data();
+			T* in = inBuffer->operator[](c).data();
+
+			float startGain = this->gains[c][k];
+			float endGain = gains[c][k];
+
 			for (size_t i = 0; i < bufferSize; i++) {
 				prc = 1.0 * i / bufferSize;
-				gain = this->gains[c][k] * (1 - prc) + gains[c][k] * prc;
-				outBuffer->operator[](k * getInputChannelsCount() + c)[i] = inBuffer->operator[](c)[i] * gain;
+				gain = startGain * (1 - prc) + endGain * prc;
+				out[i] = in[i] * gain;
 			}
 		}
 	}
@@ -109,10 +120,16 @@ void Mach1Encode::encodeBuffer(std::vector<T*>* inBuffer, std::vector<T*>* outBu
 	float gain = 0;
 	for (size_t c = 0; c < gains.size(); c++) {
 		for (size_t k = 0; k < gains[c].size(); k++) {
+			T* out = outBuffer->operator[](k * getInputChannelsCount() + c);
+			T* in = inBuffer->operator[](c);
+
+			float startGain = this->gains[c][k];
+			float endGain = gains[c][k];
+
 			for (size_t i = 0; i < bufferSize; i++) {
 				prc = 1.0 * i / bufferSize;
-				gain = this->gains[c][k] * (1 - prc) + gains[c][k] * prc;
-				outBuffer->operator[](k * getInputChannelsCount() + c)[i] = inBuffer->operator[](c)[i] * gain;
+				gain = startGain * (1 - prc) + endGain * prc;
+				out[i] = in[i] * gain;
 			}
 		}
 	}

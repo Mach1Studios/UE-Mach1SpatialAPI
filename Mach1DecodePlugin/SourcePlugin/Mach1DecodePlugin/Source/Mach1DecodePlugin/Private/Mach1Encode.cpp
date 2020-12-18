@@ -152,19 +152,23 @@ void Mach1Encode::setInputMode(Mach1EncodeInputModeType inputMode)
 	/// Sets the number of input streams to be positioned as points
 	///
 	/// - Parameters:
-	///     - INPUT_MONO
-	///     - INPUT_STEREO
-	///     - INPUT_QUAD
-    ///     - INPUT_LCRS
-    ///     - INPUT_AFORMAT
-    ///     - INPUT_BFORMAT
-    ///     - INPUT_FOAACN
-	///		- INPUT_FOAFUMA
-	///		- INPUT_2OAACN
-	/// 	- INPUT_2OAFUMA
-	/// 	- INPUT_3OAACN
-	///		- INPUT_3OAFUMA
-	///		- INPUT_LCR
+	/// 	- Mach1EncodeInputModeMono
+	/// 	- Mach1EncodeInputModeStereo
+	/// 	- Mach1EncodeInputModeQuad
+	/// 	- Mach1EncodeInputModeLCRS
+	/// 	- Mach1EncodeInputModeAFormat
+	/// 	- Mach1EncodeInputModeBFormat
+	/// 	- Mach1EncodeInputModeBFOAACN
+	/// 	- Mach1EncodeInputModeBFOAFUM
+	/// 	- Mach1EncodeInputModeB2OAACN
+	/// 	- Mach1EncodeInputModeB2OAFUMA
+	/// 	- Mach1EncodeInputModeB3OAACN, 
+	/// 	- Mach1EncodeInputModeB3OAFUMA
+	/// 	- Mach1EncodeInputModeLCR
+	/// 	- Mach1EncodeInputMode5dot0
+	/// 	- Mach1EncodeInputMode5dot1Film
+	/// 	- Mach1EncodeInputMode5dot1DTS
+	/// 	- Mach1EncodeInputMode5dot1SMTPE
 }
 
 void Mach1Encode::setOutputMode(Mach1EncodeOutputModeType outputMode)
@@ -244,12 +248,24 @@ void Mach1Encode::setElevationRadians(float elevationFromMinusHalfPItoHalfPI)
 	///     - value range: -PI/2 -> PI/2
 }
 
-void Mach1Encode::setIsotropicEncode(bool isotropicEncode)
+void Mach1Encode::setPannerMode(Mach1EncodePannerMode pannerMode)
 {
-	Mach1EncodeCAPI_setIsotropicEncode(M1obj, isotropicEncode);
-	/// Sets both stereo points rotate in relation to the
-	/// center point between them so that they always triangulate
-	/// toward center of the cuboid
+	Mach1EncodeCAPI_setPannerMode(M1obj, pannerMode);
+	/// Sets the style and mode of panner input calculation
+	///
+	/// - Parameters:
+	///		- Mach1EncodePannerModeIsotropicLinear
+	///		- Mach1EncodePannerModeIsotropicEqualPower
+	///		- Mach1EncodePannerModePeriphonicLinear
+}
+
+void Mach1Encode::setFrontSurroundPerspective(bool frontSurroundPerspective)
+{
+	Mach1EncodeCAPI_setFrontSurroundPerspective(M1obj, frontSurroundPerspective);
+	/// Sets the encoding behavior of the Center input channels of relevant Surround format,
+	/// when true the encoding behavior assumes first person perspective encoding Center channels
+	/// toward the front of the soundfield, when false we use Center channel literally making it
+	/// encoded MONO and omni-directional. 
 	///
 	/// Remark: Default is true
 }
@@ -344,5 +360,15 @@ void Mach1Encode::setStereoRotate(float sRotateDegrees)
 	///
 	/// - Parameters:
 	///     - value range: -180.0->180.0
+}
+
+void Mach1Encode::setIsotropicEncode(bool isotropicEncode)
+{
+	Mach1EncodeCAPI_setIsotropicEncode(M1obj, isotropicEncode);
+	/// Sets both stereo points rotate in relation to the
+	/// center point between them so that they always triangulate
+	/// toward center of the cuboid
+	///
+	/// Remark: Default is true
 }
 /* DEPRECATED END */
