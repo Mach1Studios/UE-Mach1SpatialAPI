@@ -8,7 +8,7 @@
 
 #include "Mach1DecodePluginPrivatePCH.h"
 
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 18
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 18) || ENGINE_MAJOR_VERSION == 5
 #include "HeadMountedDisplay.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #elif ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION <= 17
@@ -41,7 +41,7 @@ std::string toDebugString<FVector>(const FVector& value)
 
 #ifdef LEGACY_POSITIONAL
 
-float AM1BaseActor::ClosestPointOnBox(FVector point, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, FVector & closestPoint)
+float AM1BaseActor::ClosestPointOnBox(FVector point, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, FVector& closestPoint)
 {
 	FVector vector = point - center;
 	float num = 0.0f;
@@ -201,7 +201,7 @@ void AM1BaseActor::InitComponents(int32 InMaxSoundsPerChannel)
 
 	Volume = 1;
 	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++) VolumeFactor.Add(1);
-	 
+
 #ifdef LEGACY_POSITIONAL
 	mach1Decode.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
 #else 
@@ -296,7 +296,7 @@ void AM1BaseActor::SetSoundSet()
 		{
 			if (SoundsMain[i])
 			{
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
 				SoundsMain[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
 #else
 				SoundsMain[i]->bVirtualizeWhenSilent = true;
@@ -321,9 +321,9 @@ void AM1BaseActor::SetSoundSet()
 
 			for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
 			{
-				if (SoundsBlendMode[i]) 
+				if (SoundsBlendMode[i])
 				{
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
 					SoundsBlendMode[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
 #else
 					SoundsBlendMode[i]->bVirtualizeWhenSilent = true;
@@ -460,14 +460,14 @@ void AM1BaseActor::Stop()
 void AM1BaseActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (GEngine)
 	{
 		if (APlayerController* player = GetWorld()->GetFirstPlayerController())
 		{
 			Init();
 			SetSoundSet();
-			if(autoplay || needToPlayAfterInit) Play();
+			if (autoplay || needToPlayAfterInit) Play();
 		}
 	}
 }
@@ -491,9 +491,9 @@ void AM1BaseActor::Tick(float DeltaTime)
 				Billboard->SetHiddenInGame(!Debug);
 
 				FQuat PlayerRotation = FQuat::Identity;
-				FVector PlayerPosition = FVector(0,0,0);
+				FVector PlayerPosition = FVector(0, 0, 0);
 
-				 
+
 				if (manualPawn != nullptr)
 				{
 					if (useReferenceObjectRotation) PlayerRotation = manualPawn->GetControlRotation().Quaternion();
@@ -572,25 +572,25 @@ void AM1BaseActor::Tick(float DeltaTime)
 				FQuat actorRotation = GetActorRotation().Quaternion();
 
 				//bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), GetActorRightVector(), GetActorUpVector(), GetActorForwardVector(), scale, outsideClosestPoint) > 0);
-				bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), actorRotation * FVector(1,0,0), actorRotation * FVector(0, 1, 0), actorRotation * FVector(0, 0, 1), scale / 2.0f, outsideClosestPoint) > 0);
+				bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), actorRotation * FVector(1, 0, 0), actorRotation * FVector(0, 1, 0), actorRotation * FVector(0, 0, 1), scale / 2.0f, outsideClosestPoint) > 0);
 				bool hasSoundOutside = isOutside && !muteWhenOutsideObject;
 				bool hasSoundInside = !isOutside && !muteWhenInsideObject;
-				 
+
 				if (hasSoundOutside && useClosestPointRotationMuteInside) // useClosestPointRotation
 				{
 					point = outsideClosestPoint;
 
 					float dist = FVector::Dist(point, cameraPosition);
 					SetVolumeMain(vol * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-					
-					
+
+
 					if (Debug)
 					{
-						std::string info; 
+						std::string info;
 						info = "dist_:  " + toDebugString(dist) + " , ignoreTopBottom: " + toDebugString(ignoreTopBottom);
 						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 
-						
+
 						DrawDebugLine(
 							GetWorld(),
 							GetActorLocation(),
@@ -669,7 +669,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				else if (hasSoundOutside || hasSoundInside)
 				{
 					float dist = FVector::Dist(point, cameraPosition);
-                
+
 					if (Debug)
 					{
 						std::string info;
@@ -678,15 +678,15 @@ void AM1BaseActor::Tick(float DeltaTime)
 						info = "curve:  " + toDebugString((attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
 						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 					}
-					
+
 					if (hasSoundOutside)
-                    {
+					{
 						SetVolumeMain(vol * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-                    }
-                    if (useBlendMode)
-                    {
+					}
+					if (useBlendMode)
+					{
 						SetVolumeMain(vol * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
-                    }
+					}
 				}
 				else
 				{
@@ -737,13 +737,13 @@ void AM1BaseActor::Tick(float DeltaTime)
 				m1Positional.setUseYawForRotation(useYawForRotation);
 				m1Positional.setUsePitchForRotation(usePitchForRotation);
 				m1Positional.setUseRollForRotation(useRollForRotation);
-				 
+
 				m1Positional.setListenerPosition(ConvertToMach1Point3D(PlayerPosition));
 				FVector listenerAngle = (PlayerRotation.Euler());
 				m1Positional.setListenerRotation(ConvertToMach1Point3D(listenerAngle));
 				m1Positional.setDecoderAlgoPosition(ConvertToMach1Point3D(GetActorLocation()));
 				FVector decoderAngle = (GetActorRotation().Euler());
-				m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(decoderAngle)); 
+				m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(decoderAngle));
 				m1Positional.setDecoderAlgoScale(ConvertToMach1Point3D(scale));
 
 				m1Positional.evaluatePositionResults();
@@ -772,7 +772,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 					}
 					SetVolumeBlend(1.0);
 				}
-				 
+
 				if (Debug)
 				{
 					std::string info;
@@ -791,7 +791,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
 #endif
-				 
+
 			}
 		}
 	}
@@ -799,7 +799,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 }
 
 #if WITH_EDITOR
-void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEvent)
+void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.Property != NULL)
 	{
@@ -830,7 +830,7 @@ void AM1BaseActor::CalculateChannelVolumes(FQuat quat)
 
 	//SoundAlgorithm(angles.Z, angles.Y, angles.X, volumes);
 	SoundAlgorithm(angles.X, angles.Y, angles.Z, volumes);
-	
+
 
 	//#if UE_BUILD_DEBUG
 	if (Debug)
@@ -853,7 +853,7 @@ void AM1BaseActor::CalculateChannelVolumes(FQuat quat)
 		}
 		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 	}
-	 
+
 	//UE_LOG(LogTemp, Log, TEXT("Your message"));
 	//#endif
 
@@ -904,18 +904,18 @@ void AM1BaseActor::SetVolumeBlend(float volume)
 	}
 }
 
- void AM1BaseActor::SetSoundsMain() 
- {
- }
+void AM1BaseActor::SetSoundsMain()
+{
+}
 
- void AM1BaseActor::SetSoundsBlendMode() 
- {
- }
+void AM1BaseActor::SetSoundsBlendMode()
+{
+}
 
 #ifdef LEGACY_POSITIONAL
- void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float * volumes)
- {
-	 mach1Decode.decode(Yaw, Pitch, Roll, volumes);
-	 mach1Decode.beginBuffer();
- }
+void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float* volumes)
+{
+	mach1Decode.decode(Yaw, Pitch, Roll, volumes);
+	mach1Decode.beginBuffer();
+}
 #endif

@@ -99,7 +99,7 @@ namespace UnrealBuildTool.Rules
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
             }
-            else if (Target.Platform == UnrealTargetPlatform.Win32 || Target.Platform == UnrealTargetPlatform.Win64)
+            else if (Target.Platform == UnrealTargetPlatform.Win64)
             { 
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1EncodeCAPI.lib"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.lib"));
