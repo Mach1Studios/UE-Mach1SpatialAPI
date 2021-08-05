@@ -22,11 +22,21 @@ For bluprint project,
 2. Or you fisrt create base cpp project, make 4 steps
 and then copy plugin (with compiled dll) folder to your blueprint project
 
+### Unreal Engine 4 Setup Notes
+- Set Project setting to play sound with volume = 0 (Virtualize Silent Sounds)
+
+### Unreal Engine 5 Setup Notes
+- Apply the following settings to all audio files used in the M1SpatialActor object
+- Change the `Virtualization Mode` to `Play when Silent`
+- Check the `Priority` `Bypass Volume Scale for Priority` to true
+
+![UE5-VoiceSettings](../../.README/UE5-VoiceSettings.png)
+
 ## QA:
 
 ### Source
 QA to final Packaging of project completed on:
-4.17, 4.18, 4.19, 4.22, 4.24
+4.17, 4.18, 4.19, 4.22, 4.24, 5.0
 
 ### Binary
 QA to final Packaging of project completed on:
