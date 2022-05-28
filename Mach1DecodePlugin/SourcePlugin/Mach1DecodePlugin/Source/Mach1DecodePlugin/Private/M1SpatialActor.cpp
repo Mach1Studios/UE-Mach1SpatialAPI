@@ -28,7 +28,6 @@ void AM1SpatialActor::SetSoundsBlendMode()
 	SoundsBlendMode.Add(ChannelBlend6);
 	SoundsBlendMode.Add(ChannelBlend7);
 	SoundsBlendMode.Add(ChannelBlend8);
-
 }
 
 AM1SpatialActor::AM1SpatialActor() 

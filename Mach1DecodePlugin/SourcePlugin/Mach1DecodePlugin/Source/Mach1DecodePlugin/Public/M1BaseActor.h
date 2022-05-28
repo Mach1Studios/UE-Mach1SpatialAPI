@@ -38,7 +38,7 @@ protected:
 	static bool Clip(float denom, float numer, float& t0, float& t1);
 	static int DoClipping(float t0, float t1, FVector origin, FVector direction, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, bool solid, FVector& point0, FVector& point1);
 
-	void CalculateChannelVolumes(FQuat quat);
+	void CalculateChannelCoeffs(FQuat quat);
 
 #endif
 
@@ -46,7 +46,8 @@ protected:
 
 	USoundAttenuation* NullAttenuation;
 
-	TArray<float> VolumeFactor;
+	// Calculated gain coefficients to apply to the spatial mixer's gain-volume per channel
+	TArray<float> GainCoeffs;
 
 	TArray<USoundWave*> SoundsMain;
 	TArray<UAudioComponent*> LeftChannelsMain;
@@ -72,7 +73,7 @@ protected:
 	virtual void SetSoundsMain();
 	virtual void SetSoundsBlendMode();
 #ifdef LEGACY_POSITIONAL
-	virtual void SoundAlgorithm(float Yaw, float Pitch, float Roll, float* volumes);
+	virtual void SoundAlgorithm(float Yaw, float Pitch, float Roll, float* coeffs);
 #endif
 
 #ifdef LEGACY_POSITIONAL
@@ -83,7 +84,6 @@ protected:
 
 	Mach1Point3D ConvertToMach1Point3D(FVector vec);
 	Mach1Point4D ConvertToMach1Point4D(FQuat quat);
-
 
 public:
 

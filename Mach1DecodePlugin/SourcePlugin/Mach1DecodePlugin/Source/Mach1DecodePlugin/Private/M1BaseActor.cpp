@@ -200,7 +200,7 @@ void AM1BaseActor::InitComponents(int32 InMaxSoundsPerChannel)
 	RightChannelsBlend.SetNum(MAX_SOUNDS_PER_CHANNEL);
 
 	Volume = 1;
-	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++) VolumeFactor.Add(1);
+	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++) GainCoeffs.Add(1);
 	 
 #ifdef LEGACY_POSITIONAL
 	mach1Decode.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
@@ -277,11 +277,9 @@ void AM1BaseActor::Init()
 					RightChannelsBlend[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform);
 				}
 			}
-
 			isInited = true;
 		}
 	}
-
 }
 
 void AM1BaseActor::SetSoundSet()
@@ -341,9 +339,7 @@ void AM1BaseActor::SetSoundSet()
 			}
 		}
 	}
-
 }
-
 
 void AM1BaseActor::Play()
 {
@@ -492,7 +488,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				FQuat PlayerRotation = FQuat::Identity;
 				FVector PlayerPosition = FVector(0,0,0);
-
 				 
 				if (manualPawn != nullptr)
 				{
@@ -527,9 +522,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					PlayerPosition = PlayerPosition + playerPawn->GetActorLocation();
 				}
 
-
-
-
 				PlayerRotation = PlayerRotation * FQuat::MakeFromEuler(cameraManualAngleOffset);
 
 				if (Debug) {
@@ -557,7 +549,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				FVector scale = Collision->GetScaledBoxExtent(); // GetActorScale() / 2 *
 				//scale = FVector(scale.Y, scale.Z, scale.X);
 
-				float vol = Volume;
+				float masterGain = Volume;
 
 #ifdef LEGACY_POSITIONAL
 
@@ -581,8 +573,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 					point = outsideClosestPoint;
 
 					float dist = FVector::Dist(point, cameraPosition);
-					SetVolumeMain(vol * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-					
+					SetVolumeMain(masterGain * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
 					
 					if (Debug)
 					{
@@ -590,7 +581,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 						info = "dist_:  " + toDebugString(dist) + " , ignoreTopBottom: " + toDebugString(ignoreTopBottom);
 						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 
-						
 						DrawDebugLine(
 							GetWorld(),
 							GetActorLocation(),
@@ -634,8 +624,8 @@ void AM1BaseActor::Tick(float DeltaTime)
 					float dist = 1 - FMath::Max(FMath::Abs(p0.X), FMath::Max(FMath::Abs(p0.Y), FMath::Abs(p0.Z)));
 
 					//float dist = 1.0f - (cameraPosition - GetActorLocation()).Size() / (insidePoint1 - GetActorLocation()).Size();
-					SetVolumeMain(vol * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
-					SetVolumeBlend(vol * (1 - (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1)));
+					SetVolumeMain(masterGain * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
+					SetVolumeBlend(masterGain * (1 - (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1)));
 
 					if (Debug)
 					{
@@ -662,7 +652,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 					if (Debug)
 					{
-						std::string str = "vol:    " + toDebugString((attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
+						std::string str = "masterGain:    " + toDebugString((attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
 						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Blue, str.c_str());
 					}
 				}
@@ -681,18 +671,18 @@ void AM1BaseActor::Tick(float DeltaTime)
 					
 					if (hasSoundOutside)
                     {
-						SetVolumeMain(vol * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
+						SetVolumeMain(masterGain * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
                     }
                     if (useBlendMode)
                     {
-						SetVolumeMain(vol * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
+						SetVolumeMain(masterGain * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
                     }
 				}
 				else
 				{
-					vol = 0;
-					SetVolumeMain(vol);
-					SetVolumeBlend(vol);
+					masterGain = 0;
+					SetVolumeMain(masterGain);
+					SetVolumeBlend(masterGain);
 				}
 
 				FQuat quat = FLookAtMatrix(point, cameraPosition, FVector::UpVector).ToQuat();
@@ -703,7 +693,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				quat = FQuat::MakeFromEuler(FVector(useRollForRotation ? quat.Euler().X : 0, usePitchForRotation ? quat.Euler().Y : 0, useYawForRotation ? quat.Euler().Z : 0));
 				quat *= PlayerRotation;
 
-				CalculateChannelVolumes(quat);
+				CalculateChannelCoeffs(quat);
 
 				DrawDebugLine(
 					GetWorld(),
@@ -754,21 +744,21 @@ void AM1BaseActor::Tick(float DeltaTime)
 					m1Positional.setAttenuationCurveBlendMode(attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(m1Positional.getDist()) : 1);
 				}
 
-				float volumesWalls[18];
-				m1Positional.getCoefficients(volumesWalls);
+				float coeffs[18];
+				m1Positional.getCoefficients(coeffs);
 				for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
 				{
-					VolumeFactor[i] = volumesWalls[i];
+					GainCoeffs[i] = coeffs[i];
 				}
 				SetVolumeMain(1.0);
 
-				float volumesRoom[18];
-				m1Positional.getCoefficientsInterior(volumesRoom);
+				float coeffsInterior[18];
+				m1Positional.getCoefficientsInterior(coeffsInterior);
 				if (useBlendMode)
 				{
 					for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
 					{
-						VolumeFactor[i] = volumesRoom[i];
+						GainCoeffs[i] = coeffsInterior[i];
 					}
 					SetVolumeBlend(1.0);
 				}
@@ -783,19 +773,17 @@ void AM1BaseActor::Tick(float DeltaTime)
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Yellow, str.c_str());
 
 
-					info = "volumes:  ";
+					info = "Coeffs:  ";
 					for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
 					{
-						info += toDebugString(volumesWalls[i]) + ", ";
+						info += toDebugString(coeffs[i]) + ", ";
 					}
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
-#endif
-				 
+#endif	 
 			}
 		}
 	}
-
 }
 
 #if WITH_EDITOR
@@ -809,15 +797,14 @@ void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChange
 			Billboard->SetHiddenInGame(!Debug);
 		}
 	}
-
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 
 #ifdef LEGACY_POSITIONAL
-void AM1BaseActor::CalculateChannelVolumes(FQuat quat)
+void AM1BaseActor::CalculateChannelCoeffs(FQuat quat)
 {
-	static float volumes[18];
+	static float coeffs[18];
 
 	FVector angles = GetEuler(quat);
 
@@ -828,9 +815,8 @@ void AM1BaseActor::CalculateChannelVolumes(FQuat quat)
 	}
 	GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
-	//SoundAlgorithm(angles.Z, angles.Y, angles.X, volumes);
-	SoundAlgorithm(angles.X, angles.Y, angles.Z, volumes);
-	
+	//SoundAlgorithm(angles.Z, angles.Y, angles.X, coeffs);
+	SoundAlgorithm(angles.X, angles.Y, angles.Z, coeffs);
 
 	//#if UE_BUILD_DEBUG
 	if (Debug)
@@ -842,14 +828,14 @@ void AM1BaseActor::CalculateChannelVolumes(FQuat quat)
 		info = "left    :  ";
 		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
 		{
-			info += toDebugString(volumes[i * 2]) + ", ";
+			info += toDebugString(coeffs[i * 2]) + ", ";
 		}
 		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
 		info = "right    : ";
 		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
 		{
-			info += toDebugString(volumes[i * 2 + 1]) + ", ";
+			info += toDebugString(coeffs[i * 2 + 1]) + ", ";
 		}
 		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 	}
@@ -859,7 +845,7 @@ void AM1BaseActor::CalculateChannelVolumes(FQuat quat)
 
 	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
 	{
-		VolumeFactor[i] = volumes[i];
+		GainCoeffs[i] = coeffs[i];
 	}
 }
 #endif
@@ -868,16 +854,16 @@ void AM1BaseActor::SetVolumeMain(float volume)
 {
 	if (isInited)
 	{
-		float vol = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
+		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
 		float newVolume = 0;
 
 		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
 		{
-			newVolume = VolumeFactor[i * 2] * vol;
+			newVolume = GainCoeffs[i * 2] * masterGain;
 			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
 			LeftChannelsMain[i]->SetVolumeMultiplier(newVolume);
 
-			newVolume = VolumeFactor[i * 2 + 1] * vol;
+			newVolume = GainCoeffs[i * 2 + 1] * masterGain;
 			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
 			RightChannelsMain[i]->SetVolumeMultiplier(newVolume);
 		}
@@ -888,16 +874,16 @@ void AM1BaseActor::SetVolumeBlend(float volume)
 {
 	if (isInited && useBlendMode)
 	{
-		float vol = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
+		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
 		float newVolume = 0;
 
 		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
 		{
-			newVolume = VolumeFactor[i * 2] * vol;
+			newVolume = GainCoeffs[i * 2] * masterGain;
 			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
 			LeftChannelsBlend[i]->SetVolumeMultiplier(newVolume);
 
-			newVolume = VolumeFactor[i * 2 + 1] * vol;
+			newVolume = GainCoeffs[i * 2 + 1] * masterGain;
 			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
 			RightChannelsBlend[i]->SetVolumeMultiplier(newVolume);
 		}
@@ -913,9 +899,9 @@ void AM1BaseActor::SetVolumeBlend(float volume)
  }
 
 #ifdef LEGACY_POSITIONAL
- void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float * volumes)
+ void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float * coeffs)
  {
-	 mach1Decode.decode(Yaw, Pitch, Roll, volumes);
+	 mach1Decode.decode(Yaw, Pitch, Roll, coeffs);
 	 mach1Decode.beginBuffer();
  }
 #endif
