@@ -100,9 +100,12 @@ public:
 	#if WITH_EDITOR
 	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	#endif
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Force HMD rotation instead of Player Controller")
-		bool ForceHMDRotation = true;
 
+	/** When true automatically get the orientation from the first indexed camera's rotations, tends to not include rotations applied to parent/pawn. When false automatically use PlayerCameraManager which tends to capture all rotations applied to an HMD or camera. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Force HMD rotation instead of Player Controller")
+		bool ForceHMDRotation = false;
+
+	/** Use this to apply an additional rotation offset. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Camera Offset")
 		FVector cameraManualAngleOffset;
 
@@ -112,17 +115,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Override Reference Object Rotation")
 		bool useReferenceObjectRotation = true;
 
+	/** Reference a manual Pawn instead of the automatically found first indexed camera. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Reference Pawn")
 		APawn* manualPawn = nullptr;
 
+	/** Reference a manual Actor/Object instead of this Actor. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Reference Actor")
 		AActor* manualActor = nullptr;
 
+	/** Reference a manual Camera instead of the automatically found first index. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Reference Camera Actor")
 		ACameraActor* manualCameraActor = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Display Debug")
-		bool Debug = true;
+		bool Debug = false;
 
 	UFUNCTION(BlueprintCallable, Category = "Trigger Options")
 		void Play();

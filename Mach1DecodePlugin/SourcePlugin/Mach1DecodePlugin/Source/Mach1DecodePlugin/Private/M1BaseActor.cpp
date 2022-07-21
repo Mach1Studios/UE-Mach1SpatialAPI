@@ -518,8 +518,13 @@ void AM1BaseActor::Tick(float DeltaTime)
 				}
 				else
 				{
-					PlayerRotation = PlayerRotation * player->GetControlRotation().Quaternion();
-					PlayerPosition = PlayerPosition + playerPawn->GetActorLocation();
+					APlayerCameraManager* playerCameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+					FRotator hmdRotator = playerCameraManager->GetCameraRotation();
+					FVector hmdPosition = playerCameraManager->GetCameraLocation();
+					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(-hmdRotator.Quaternion().Euler().X, -hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
+
+					PlayerRotation = PlayerRotation * player->GetControlRotation().Quaternion() * hmdQuat;
+					PlayerPosition = PlayerPosition + playerPawn->GetActorLocation(); // + hmdPosition
 				}
 
 				PlayerRotation = PlayerRotation * FQuat::MakeFromEuler(cameraManualAngleOffset);
