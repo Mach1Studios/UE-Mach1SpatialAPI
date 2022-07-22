@@ -163,12 +163,12 @@ FVector AM1BaseActor::GetEuler(FQuat q1)
 
 Mach1Point3D AM1BaseActor::ConvertToMach1Point3D(FVector vec)
 {
-	return Mach1Point3D{ vec.X, vec.Y, vec.Z };
+	return Mach1Point3D{ (float)vec.X, (float)vec.Y, (float)vec.Z };
 }
 
 Mach1Point4D AM1BaseActor::ConvertToMach1Point4D(FQuat quat)
 {
-	return Mach1Point4D{ quat.X, quat.Y, quat.Z, quat.W };
+	return Mach1Point4D{ (float)quat.X, (float)quat.Y, (float)quat.Z, (float)quat.W };
 }
 
 // Sets default values
@@ -201,7 +201,7 @@ void AM1BaseActor::InitComponents(int32 InMaxSoundsPerChannel)
 
 	Volume = 1;
 	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++) GainCoeffs.Add(1);
-	 
+
 #ifdef LEGACY_POSITIONAL
 	mach1Decode.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
 #else 
@@ -319,7 +319,7 @@ void AM1BaseActor::SetSoundSet()
 
 			for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
 			{
-				if (SoundsBlendMode[i]) 
+				if (SoundsBlendMode[i])
 				{
 #if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
 					SoundsBlendMode[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
@@ -456,14 +456,14 @@ void AM1BaseActor::Stop()
 void AM1BaseActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (GEngine)
 	{
 		if (APlayerController* player = GetWorld()->GetFirstPlayerController())
 		{
 			Init();
 			SetSoundSet();
-			if(autoplay || needToPlayAfterInit) Play();
+			if (autoplay || needToPlayAfterInit) Play();
 		}
 	}
 }
@@ -487,8 +487,8 @@ void AM1BaseActor::Tick(float DeltaTime)
 				Billboard->SetHiddenInGame(!Debug);
 
 				FQuat PlayerRotation = FQuat::Identity;
-				FVector PlayerPosition = FVector(0,0,0);
-				 
+				FVector PlayerPosition = FVector(0, 0, 0);
+
 				if (manualPawn != nullptr)
 				{
 					if (useReferenceObjectRotation) PlayerRotation = manualPawn->GetControlRotation().Quaternion();
@@ -552,7 +552,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				FVector point = GetActorLocation();
 
 				FVector scale = Collision->GetScaledBoxExtent(); // GetActorScale() / 2 *
-				//scale = FVector(scale.Y, scale.Z, scale.X);
+																 //scale = FVector(scale.Y, scale.Z, scale.X);
 
 				float masterGain = Volume;
 
@@ -569,20 +569,20 @@ void AM1BaseActor::Tick(float DeltaTime)
 				FQuat actorRotation = GetActorRotation().Quaternion();
 
 				//bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), GetActorRightVector(), GetActorUpVector(), GetActorForwardVector(), scale, outsideClosestPoint) > 0);
-				bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), actorRotation * FVector(1,0,0), actorRotation * FVector(0, 1, 0), actorRotation * FVector(0, 0, 1), scale / 2.0f, outsideClosestPoint) > 0);
+				bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), actorRotation * FVector(1, 0, 0), actorRotation * FVector(0, 1, 0), actorRotation * FVector(0, 0, 1), scale / 2.0f, outsideClosestPoint) > 0);
 				bool hasSoundOutside = isOutside && !muteWhenOutsideObject;
 				bool hasSoundInside = !isOutside && !muteWhenInsideObject;
-				 
+
 				if (hasSoundOutside && useClosestPointRotationMuteInside) // useClosestPointRotation
 				{
 					point = outsideClosestPoint;
 
 					float dist = FVector::Dist(point, cameraPosition);
 					SetVolumeMain(masterGain * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-					
+
 					if (Debug)
 					{
-						std::string info; 
+						std::string info;
 						info = "dist_:  " + toDebugString(dist) + " , ignoreTopBottom: " + toDebugString(ignoreTopBottom);
 						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 
@@ -664,7 +664,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				else if (hasSoundOutside || hasSoundInside)
 				{
 					float dist = FVector::Dist(point, cameraPosition);
-                
+
 					if (Debug)
 					{
 						std::string info;
@@ -673,15 +673,15 @@ void AM1BaseActor::Tick(float DeltaTime)
 						info = "curve:  " + toDebugString((attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
 						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 					}
-					
+
 					if (hasSoundOutside)
-                    {
+					{
 						SetVolumeMain(masterGain * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-                    }
-                    if (useBlendMode)
-                    {
+					}
+					if (useBlendMode)
+					{
 						SetVolumeMain(masterGain * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
-                    }
+					}
 				}
 				else
 				{
@@ -732,13 +732,13 @@ void AM1BaseActor::Tick(float DeltaTime)
 				m1Positional.setUseYawForRotation(useYawForRotation);
 				m1Positional.setUsePitchForRotation(usePitchForRotation);
 				m1Positional.setUseRollForRotation(useRollForRotation);
-				 
+
 				m1Positional.setListenerPosition(ConvertToMach1Point3D(PlayerPosition));
 				FVector listenerAngle = (PlayerRotation.Euler());
 				m1Positional.setListenerRotation(ConvertToMach1Point3D(listenerAngle));
 				m1Positional.setDecoderAlgoPosition(ConvertToMach1Point3D(GetActorLocation()));
 				FVector decoderAngle = (GetActorRotation().Euler());
-				m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(decoderAngle)); 
+				m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(decoderAngle));
 				m1Positional.setDecoderAlgoScale(ConvertToMach1Point3D(scale));
 
 				m1Positional.evaluatePositionResults();
@@ -767,7 +767,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 					}
 					SetVolumeBlend(1.0);
 				}
-				 
+
 				if (Debug)
 				{
 					std::string info;
@@ -844,7 +844,7 @@ void AM1BaseActor::CalculateChannelCoeffs(FQuat quat)
 		}
 		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 	}
-	 
+
 	//UE_LOG(LogTemp, Log, TEXT("Your message"));
 	//#endif
 
@@ -895,18 +895,18 @@ void AM1BaseActor::SetVolumeBlend(float volume)
 	}
 }
 
- void AM1BaseActor::SetSoundsMain() 
- {
- }
+void AM1BaseActor::SetSoundsMain()
+{
+}
 
- void AM1BaseActor::SetSoundsBlendMode() 
- {
- }
+void AM1BaseActor::SetSoundsBlendMode()
+{
+}
 
 #ifdef LEGACY_POSITIONAL
- void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float * coeffs)
- {
-	 mach1Decode.decode(Yaw, Pitch, Roll, coeffs);
-	 mach1Decode.beginBuffer();
- }
+void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float * coeffs)
+{
+	mach1Decode.decode(Yaw, Pitch, Roll, coeffs);
+	mach1Decode.beginBuffer();
+}
 #endif
