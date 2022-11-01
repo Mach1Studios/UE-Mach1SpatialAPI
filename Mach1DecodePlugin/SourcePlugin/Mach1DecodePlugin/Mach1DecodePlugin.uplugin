@@ -19,10 +19,11 @@
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen",
 			"WhitelistPlatforms": [
+				"Win64",
+				"Mac",
 				"Android",
 				"Linux",
-				"Mac",
-				"Win64"
+				"Hololens"
 			]
 		}
 	]
