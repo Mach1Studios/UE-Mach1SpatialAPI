@@ -22,6 +22,7 @@
 				"Win64",
 				"Mac",
 				"Android",
+				"IOS",
 				"Linux",
 				"Hololens"
 			]
