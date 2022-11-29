@@ -1,7 +1,7 @@
 {
-	"FileVersion": 3,
+	"FileVersion": 4,
 	"Version": 1,
-	"VersionName": "1.0.3",
+	"VersionName": "1.0.4",
 	"FriendlyName": "Mach1 Spatial Decode Plugin",
 	"Description": "Decoding for VVBP Mach1 Spatial encoded mixes / layers",
 	"Category": "Audio",
@@ -22,9 +22,7 @@
 				"Win64",
 				"Mac",
 				"Android",
-				"IOS",
-				"Linux",
-				"Hololens"
+				"IOS"
 			]
 		}
 	]

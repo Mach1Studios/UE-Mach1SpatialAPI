@@ -73,7 +73,6 @@ namespace UnrealBuildTool.Rules
             // add Mach1 library
             string Mach1BaseDirectory = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "Mach1"));
             string Mach1BinDirectory = Path.Combine(Mach1BaseDirectory, "bin", Target.Platform.ToString());
-
             PublicIncludePaths.Add(Path.Combine(Mach1BaseDirectory, "include"));
 
             if (Target.Platform == UnrealTargetPlatform.Android)
@@ -82,44 +81,31 @@ namespace UnrealBuildTool.Rules
                 var archs =  new string[] { "armeabi-v7a", "x86" };
 				foreach(var arch in archs)
 				{
-                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1EncodeCAPI.a"));
                     PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1DecodeCAPI.a"));
                     PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1DecodePositionalCAPI.a"));
-                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1TranscodeCAPI.a"));
                 }
             }
             else if (Target.Platform == UnrealTargetPlatform.IOS)
             {
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1EncodeCAPI.a"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1TranscodeCAPI.a"));
             }
             else if (Target.Platform == UnrealTargetPlatform.Mac)
             {
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1EncodeCAPI.a"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1TranscodeCAPI.a"));
             }
             else if (Target.Platform == UnrealTargetPlatform.Win64)
             { 
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1EncodeCAPI.lib"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.lib"));
                 PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.lib"));
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1TranscodeCAPI.lib"));
 
-                RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1EncodeCAPI.dll"));
                 RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"));
                 RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"));
-                RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1TranscodeCAPI.dll"));
 
-                CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1EncodeCAPI.dll"), Target);
                 CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"), Target);
                 CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"), Target);
-                CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1TranscodeCAPI.dll"), Target);
             }
-
         }
     }
 }
