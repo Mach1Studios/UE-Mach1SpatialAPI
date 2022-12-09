@@ -20,7 +20,6 @@
 
 #define MIN_SOUND_VOLUME (KINDA_SMALL_NUMBER*2)
 
-
 template<typename T>
 std::string toDebugString(const T& value)
 {
@@ -38,113 +37,6 @@ std::string toDebugString<FVector>(const FVector& value)
 	oss << std::fixed << "(" << value.X << ", " << value.Y << ", " << value.Z << ")";
 	return oss.str();
 }
-
-#ifdef LEGACY_POSITIONAL
-
-float AM1BaseActor::ClosestPointOnBox(FVector point, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, FVector & closestPoint)
-{
-	FVector vector = point - center;
-	float num = 0.0f;
-
-	float num0 = FVector::DotProduct(vector, axis0);
-	if (num0 < -extents.X)
-	{
-		num += powf(num0 + extents.X, 2);
-		num0 = -extents.X;
-	}
-	else if (num0 > extents.X)
-	{
-		num += powf(num0 - extents.X, 2);
-		num0 = extents.X;
-	}
-
-	float num1 = FVector::DotProduct(vector, axis1);
-	if (num1 < -extents.Y)
-	{
-		num += powf(num1 + extents.Y, 2);
-		num1 = -extents.Y;
-	}
-	else if (num1 > extents.Y)
-	{
-		num += powf(num1 - extents.Y, 2);
-		num1 = extents.Y;
-	}
-
-	float num2 = FVector::DotProduct(vector, axis2);
-	if (num2 < -extents.Z)
-	{
-		num += powf(num2 + extents.Z, 2);
-		num2 = -extents.Z;
-	}
-	else if (num2 > extents.Z)
-	{
-		num += powf(num2 - extents.Z, 2);
-		num2 = extents.Z;
-	}
-	closestPoint = center + num0 * axis0 + num1 * axis1 + num2 * axis2;
-
-	return sqrt(num);
-}
-
-
-bool AM1BaseActor::Clip(float denom, float numer, float& t0, float& t1)
-{
-	if ((double)denom > 0.0)
-	{
-		if ((double)numer > (double)denom * (double)t1)
-			return false;
-		if ((double)numer > (double)denom * (double)t0)
-			t0 = numer / denom;
-		return true;
-	}
-	if ((double)denom >= 0.0)
-		return (double)numer <= 0.0;
-	if ((double)numer > (double)denom * (double)t0)
-		return false;
-	if ((double)numer > (double)denom * (double)t1)
-		t1 = numer / denom;
-	return true;
-}
-
-int AM1BaseActor::DoClipping(float t0, float t1, FVector origin, FVector direction, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, bool solid, FVector& point0, FVector& point1)
-{
-	FVector vector = origin - center;
-	FVector vector2 = FVector(FVector::DotProduct(vector, axis0), FVector::DotProduct(vector, axis1), FVector::DotProduct(vector, axis2));
-	FVector vector3 = FVector(FVector::DotProduct(direction, axis0), FVector::DotProduct(direction, axis1), FVector::DotProduct(direction, axis2));
-
-	float num = t0;
-	float num2 = t1;
-
-	int quantity = 0;
-
-	bool flag = Clip(vector3.X, -vector2.X - extents.X, t0, t1) && Clip(-vector3.X, vector2.X - extents.X, t0, t1) && Clip(vector3.Y, -vector2.Y - extents.Y, t0, t1) && Clip(-vector3.Y, vector2.Y - extents.Y, t0, t1) && Clip(vector3.Z, -vector2.Z - extents.Z, t0, t1) && Clip(-vector3.Z, vector2.Z - extents.Z, t0, t1);
-	if (flag && (solid || t0 != num || t1 != num2))
-	{
-		if (t1 > t0)
-		{
-			quantity = 2;
-			point0 = origin + t0 * direction;
-			point1 = origin + t1 * direction;
-		}
-		else
-		{
-
-			quantity = 1;
-			point0 = origin + t0 * direction;
-			point1 = FVector::ZeroVector;
-		}
-	}
-	else
-	{
-		quantity = 0;
-		point0 = FVector::ZeroVector;
-		point1 = FVector::ZeroVector;
-	}
-
-	return quantity;
-}
-
-#endif
 
 FVector AM1BaseActor::GetEuler(FQuat q1)
 {
@@ -202,11 +94,7 @@ void AM1BaseActor::InitComponents(int32 InMaxSoundsPerChannel)
 	Volume = 1;
 	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++) GainCoeffs.Add(1);
 
-#ifdef LEGACY_POSITIONAL
-	mach1Decode.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
-#else 
 	m1Positional.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
-#endif
 }
 
 void AM1BaseActor::Init()
@@ -521,9 +409,12 @@ void AM1BaseActor::Tick(float DeltaTime)
 					APlayerCameraManager* playerCameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
 					FRotator hmdRotator = playerCameraManager->GetCameraRotation();
 					FVector hmdPosition = playerCameraManager->GetCameraLocation();
-					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(-hmdRotator.Quaternion().Euler().X, -hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
-
-					PlayerRotation = PlayerRotation * player->GetControlRotation().Quaternion() * hmdQuat;
+					
+					// Some leftover calculations for exploring multi-cam or custom VR cam setups
+					//FQuat hmdQuat = FQuat::MakeFromEuler(FVector(-hmdRotator.Quaternion().Euler().X, -hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
+					//PlayerRotation = PlayerRotation * player->GetControlRotation().Quaternion() * hmdQuat;
+					
+					PlayerRotation = player->GetControlRotation().Quaternion();
 					PlayerPosition = PlayerPosition + playerPawn->GetActorLocation(); // + hmdPosition
 				}
 
@@ -555,173 +446,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 																 //scale = FVector(scale.Y, scale.Z, scale.X);
 
 				float masterGain = Volume;
-
-#ifdef LEGACY_POSITIONAL
-
-				FVector outsideClosestPoint;
-
-				FVector cameraPosition = PlayerPosition;
-				if (ignoreTopBottom && useBlendMode)
-				{
-					cameraPosition.Z = GetActorLocation().Z;
-				}
-
-				FQuat actorRotation = GetActorRotation().Quaternion();
-
-				//bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), GetActorRightVector(), GetActorUpVector(), GetActorForwardVector(), scale, outsideClosestPoint) > 0);
-				bool isOutside = (ClosestPointOnBox(cameraPosition, GetActorLocation(), actorRotation * FVector(1, 0, 0), actorRotation * FVector(0, 1, 0), actorRotation * FVector(0, 0, 1), scale / 2.0f, outsideClosestPoint) > 0);
-				bool hasSoundOutside = isOutside && !muteWhenOutsideObject;
-				bool hasSoundInside = !isOutside && !muteWhenInsideObject;
-
-				if (hasSoundOutside && useClosestPointRotationMuteInside) // useClosestPointRotation
-				{
-					point = outsideClosestPoint;
-
-					float dist = FVector::Dist(point, cameraPosition);
-					SetVolumeMain(masterGain * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-
-					if (Debug)
-					{
-						std::string info;
-						info = "dist_:  " + toDebugString(dist) + " , ignoreTopBottom: " + toDebugString(ignoreTopBottom);
-						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
-
-						DrawDebugLine(
-							GetWorld(),
-							GetActorLocation(),
-							point,
-							FColor(255, 0, 0),
-							false,
-							-1,
-							0,
-							0
-						);
-
-						DrawDebugPoint(GetWorld(),
-							point,
-							10.0,
-							FColor(255, 0, 0),
-							false,
-							-1,
-							0
-						);
-					}
-				}
-				else if (hasSoundInside && useBlendMode)// && DoClipping(0, std::numeric_limits<float>::max(), cameraPosition, (cameraPosition - GetActorLocation()).GetSafeNormal(), GetActorLocation(), GetActorRightVector(), GetActorUpVector(), GetActorForwardVector(), scale, true, insidePoint0, insidePoint1) == 2)
-				{
-					FVector p0 = GetActorTransform().InverseTransformPosition(cameraPosition) / 100;
-
-					FVector p1 = p0;
-					if (FMath::Abs(p0.X) > FMath::Abs(p0.Y) && FMath::Abs(p0.X) > FMath::Abs(p0.Z))
-					{
-						p1.X = p0.X > 0 ? 1 : -1;
-					}
-					if (FMath::Abs(p0.Y) > FMath::Abs(p0.X) && FMath::Abs(p0.Y) > FMath::Abs(p0.Z))
-					{
-						p1.Y = p0.Y > 0 ? 1 : -1;
-					}
-					if (FMath::Abs(p0.Z) > FMath::Abs(p0.X) && FMath::Abs(p0.Z) > FMath::Abs(p0.Y))
-					{
-						p1.Z = p0.Z > 0 ? 1 : -1;
-					}
-					p1 = GetActorTransform().TransformPosition(p1 * 100);
-
-					float dist = 1 - FMath::Max(FMath::Abs(p0.X), FMath::Max(FMath::Abs(p0.Y), FMath::Abs(p0.Z)));
-
-					//float dist = 1.0f - (cameraPosition - GetActorLocation()).Size() / (insidePoint1 - GetActorLocation()).Size();
-					SetVolumeMain(masterGain * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
-					SetVolumeBlend(masterGain * (1 - (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1)));
-
-					if (Debug)
-					{
-						DrawDebugLine(
-							GetWorld(),
-							cameraPosition,
-							p1,
-							FColor(255, 255, 0),
-							false,
-							-1,
-							0,
-							0
-						);
-
-						DrawDebugPoint(GetWorld(),
-							p1,
-							10.0,
-							FColor(255, 255, 0),
-							false,
-							-1,
-							0
-						);
-					}
-
-					if (Debug)
-					{
-						std::string str = "masterGain:    " + toDebugString((attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
-						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Blue, str.c_str());
-					}
-				}
-				else if (hasSoundOutside || hasSoundInside)
-				{
-					float dist = FVector::Dist(point, cameraPosition);
-
-					if (Debug)
-					{
-						std::string info;
-						info = "dist old:  " + toDebugString(dist) + " , ignoreTopBottom: " + toDebugString(ignoreTopBottom);
-						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
-						info = "curve:  " + toDebugString((attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-						GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
-					}
-
-					if (hasSoundOutside)
-					{
-						SetVolumeMain(masterGain * (attenuationCurve ? attenuationCurve->GetFloatValue(dist) : 1));
-					}
-					if (useBlendMode)
-					{
-						SetVolumeMain(masterGain * (attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(dist) : 1));
-					}
-				}
-				else
-				{
-					masterGain = 0;
-					SetVolumeMain(masterGain);
-					SetVolumeBlend(masterGain);
-				}
-
-				FQuat quat = FLookAtMatrix(point, cameraPosition, FVector::UpVector).ToQuat();
-				quat = quat.Inverse();
-				quat = quat * actorRotation;
-
-				//FQuat quat = FLookAtMatrix(point, cameraPosition, FVector::UpVector).Inverse().ToQuat() * actorRotation;
-				quat = FQuat::MakeFromEuler(FVector(useRollForRotation ? quat.Euler().X : 0, usePitchForRotation ? quat.Euler().Y : 0, useYawForRotation ? quat.Euler().Z : 0));
-				quat *= PlayerRotation;
-
-				CalculateChannelCoeffs(quat);
-
-				DrawDebugLine(
-					GetWorld(),
-					GetActorLocation(),
-					quat * (FVector::ForwardVector * 100),
-					FColor(255, 255, 0),
-					false,
-					-1,
-					0,
-					20
-				);
-				DrawDebugLine(
-					GetWorld(),
-					GetActorLocation(),
-					quat * (FVector::RightVector * 50),
-					FColor(255, 255, 0),
-					false,
-					-1,
-					0,
-					20
-				);
-
-#else
 
 				m1Positional.setUseBlendMode(useBlendMode);
 				m1Positional.setIgnoreTopBottom(ignoreTopBottom);
@@ -785,7 +509,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					}
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
-#endif	 
 			}
 		}
 	}
@@ -803,55 +526,6 @@ void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChange
 		}
 	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
-#endif
-
-#ifdef LEGACY_POSITIONAL
-void AM1BaseActor::CalculateChannelCoeffs(FQuat quat)
-{
-	static float coeffs[18];
-
-	FVector angles = GetEuler(quat);
-
-	std::string info = "euler    :  ";
-	for (int i = 0; i < 3; i++)
-	{
-		info += toDebugString(angles[i]) + " , ";
-	}
-	GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
-
-	//SoundAlgorithm(angles.Z, angles.Y, angles.X, coeffs);
-	SoundAlgorithm(angles.X, angles.Y, angles.Z, coeffs);
-
-	//#if UE_BUILD_DEBUG
-	if (Debug)
-	{
-		std::string str = "angles m1:    " + toDebugString(angles.X) + " , " + toDebugString(angles.Y) + " , " + toDebugString(angles.Z);
-		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Yellow, str.c_str());
-
-		std::string info;
-		info = "left    :  ";
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
-		{
-			info += toDebugString(coeffs[i * 2]) + ", ";
-		}
-		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
-
-		info = "right    : ";
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
-		{
-			info += toDebugString(coeffs[i * 2 + 1]) + ", ";
-		}
-		GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
-	}
-
-	//UE_LOG(LogTemp, Log, TEXT("Your message"));
-	//#endif
-
-	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
-	{
-		GainCoeffs[i] = coeffs[i];
-	}
 }
 #endif
 
@@ -902,11 +576,3 @@ void AM1BaseActor::SetSoundsMain()
 void AM1BaseActor::SetSoundsBlendMode()
 {
 }
-
-#ifdef LEGACY_POSITIONAL
-void AM1BaseActor::SoundAlgorithm(float Yaw, float Pitch, float Roll, float * coeffs)
-{
-	mach1Decode.decode(Yaw, Pitch, Roll, coeffs);
-	mach1Decode.beginBuffer();
-}
-#endif

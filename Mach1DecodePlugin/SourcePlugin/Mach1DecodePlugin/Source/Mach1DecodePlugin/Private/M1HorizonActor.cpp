@@ -26,11 +26,6 @@ void AM1HorizonActor::SetSoundsBlendMode()
 AM1HorizonActor::AM1HorizonActor()
 {
 	InitComponents(4);
-
-#ifdef LEGACY_POSITIONAL
-	mach1Decode.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon_4);
-#else 
-	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon_4);
-#endif
+	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon);
 }
  
