@@ -529,6 +529,12 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				PlayerRotation = PlayerRotation * FQuat::MakeFromEuler(cameraManualAngleOffset);
 
+				FVector point = GetActorLocation();
+
+				FVector scale = Collision->GetScaledBoxExtent(); // GetActorScale() / 2 *
+				//scale = FVector(scale.Y, scale.Z, scale.X);
+
+
 				if (Debug) {
 					std::string info;
 
@@ -548,11 +554,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
-
-				FVector point = GetActorLocation();
-
-				FVector scale = Collision->GetScaledBoxExtent(); // GetActorScale() / 2 *
-																 //scale = FVector(scale.Y, scale.Z, scale.X);
 
 				float masterGain = Volume;
 
@@ -766,6 +767,28 @@ void AM1BaseActor::Tick(float DeltaTime)
 						GainCoeffs[i] = coeffsInterior[i];
 					}
 					SetVolumeBlend(1.0);
+				}
+
+			
+
+				if (Debug) {
+					FVector edges[] = {
+					   {-1, 1, 1},
+					   {1, 1, 1},
+					   {-1, -1, 1},
+					   {1, -1, 1},
+					   {-1, 1, -1},
+					   {1, 1, -1},
+					   {-1, -1, -1},
+					   {1, -1, -1},
+					};
+
+					for (int i = 0; i < 8; i++)
+					{
+						DrawDebugString(GetWorld(), point + edges[i] * scale, FString(std::to_string(i).c_str()));
+						DrawDebugSphere(GetWorld(), point + (edges[i] + FVector(+0.1, 0, 0)) * scale, 10 * coeffs[i * 2 + 0], 16, FColor::Blue, false, 0.5f);
+						DrawDebugSphere(GetWorld(), point + (edges[i] + FVector(-0.1, 0, 0)) * scale, 10 * coeffs[i * 2 + 1], 16, FColor::Red, false, 0.5f);
+					}
 				}
 
 				if (Debug)
