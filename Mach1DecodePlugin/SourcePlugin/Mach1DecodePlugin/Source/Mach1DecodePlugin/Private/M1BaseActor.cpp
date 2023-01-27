@@ -20,6 +20,7 @@
 
 #define MIN_SOUND_VOLUME (KINDA_SMALL_NUMBER*2)
 
+
 template<typename T>
 std::string toDebugString(const T& value)
 {
@@ -37,7 +38,7 @@ std::string toDebugString<FVector>(const FVector& value)
 	oss << std::fixed << "(" << value.X << ", " << value.Y << ", " << value.Z << ")";
 	return oss.str();
 }
-
+ 
 FVector AM1BaseActor::GetEuler(FQuat q1)
 {
 	float sq = q1.X * q1.Y + q1.Z * q1.W;
@@ -399,9 +400,9 @@ void AM1BaseActor::Tick(float DeltaTime)
 					FVector hmdPosition;
 					UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(hmdRotator, hmdPosition);
 
-					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(-hmdRotator.Quaternion().Euler().X, -hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
+					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(hmdRotator.Quaternion().Euler().X, hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
 
-					PlayerRotation = PlayerRotation * hmdQuat;// rotator.Quaternion() * player->GetControlRotation().Quaternion();
+					PlayerRotation = PlayerRotation * hmdQuat; 
 					PlayerPosition = PlayerPosition + hmdPosition;
 				}
 				else
@@ -409,22 +410,16 @@ void AM1BaseActor::Tick(float DeltaTime)
 					APlayerCameraManager* playerCameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
 					FRotator hmdRotator = playerCameraManager->GetCameraRotation();
 					FVector hmdPosition = playerCameraManager->GetCameraLocation();
-					
-					// Some leftover calculations for exploring multi-cam or custom VR cam setups
-					//FQuat hmdQuat = FQuat::MakeFromEuler(FVector(-hmdRotator.Quaternion().Euler().X, -hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
-					//PlayerRotation = PlayerRotation * player->GetControlRotation().Quaternion() * hmdQuat;
-					
-					PlayerRotation = player->GetControlRotation().Quaternion();
+
+					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(hmdRotator.Quaternion().Euler().X, hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
+
+					PlayerRotation = PlayerRotation * hmdQuat;
 					PlayerPosition = PlayerPosition + playerPawn->GetActorLocation(); // + hmdPosition
 				}
 
 				PlayerRotation = PlayerRotation * FQuat::MakeFromEuler(cameraManualAngleOffset);
 
-				FVector point = GetActorLocation();
-
-				FVector scale = Collision->GetScaledBoxExtent(); // GetActorScale() / 2 *
-				//scale = FVector(scale.Y, scale.Z, scale.X);
-
+				FVector scale = Collision->GetScaledBoxExtent(); 
 
 				if (Debug) {
 					std::string info;
@@ -447,23 +442,30 @@ void AM1BaseActor::Tick(float DeltaTime)
 				}
 
 				float masterGain = Volume;
+ 
 
 				m1Positional.setUseBlendMode(useBlendMode);
 				m1Positional.setIgnoreTopBottom(ignoreTopBottom);
 				m1Positional.setMuteWhenOutsideObject(muteWhenOutsideObject);
 				m1Positional.setMuteWhenInsideObject(muteWhenInsideObject);
 				m1Positional.setUseAttenuation(useFalloff);
-				m1Positional.setUsePlaneCalculation(useClosestPointRotationMuteInside);
+				m1Positional.setUsePlaneCalculation(usePlaneCalculation);
 				m1Positional.setUseYawForRotation(useYawForRotation);
 				m1Positional.setUsePitchForRotation(usePitchForRotation);
 				m1Positional.setUseRollForRotation(useRollForRotation);
 
 				m1Positional.setListenerPosition(ConvertToMach1Point3D(PlayerPosition));
+
 				FVector listenerAngle = (PlayerRotation.Euler());
 				m1Positional.setListenerRotation(ConvertToMach1Point3D(listenerAngle));
+				//m1Positional.setListenerRotationQuat(ConvertToMach1Point4D(PlayerRotation));
+
 				m1Positional.setDecoderAlgoPosition(ConvertToMach1Point3D(GetActorLocation()));
+
 				FVector decoderAngle = (GetActorRotation().Euler());
 				m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(decoderAngle));
+				//m1Positional.setDecoderAlgoRotationQuat(ConvertToMach1Point4D(GetActorRotation().Quaternion()));
+
 				m1Positional.setDecoderAlgoScale(ConvertToMach1Point3D(scale));
 
 				m1Positional.evaluatePositionResults();
@@ -496,22 +498,30 @@ void AM1BaseActor::Tick(float DeltaTime)
 			
 
 				if (Debug) {
-					FVector edges[] = {
+					Mach1Point3D points[] = {
 					   {-1, 1, 1},
 					   {1, 1, 1},
 					   {-1, -1, 1},
 					   {1, -1, 1},
 					   {-1, 1, -1},
 					   {1, 1, -1},
-					   {-1, -1, -1},
+					   {-1, -1, -1}, 
 					   {1, -1, -1},
 					};
 
+					FQuat quat = FQuat::MakeFromEuler(FVector(m1Positional.getPositionalRotation().x, m1Positional.getPositionalRotation().y, m1Positional.getPositionalRotation().z));
+					DrawDebugBox(GetWorld(), PlayerPosition, FVector(scale), quat, FColor::Red);
+
 					for (int i = 0; i < 8; i++)
 					{
-						DrawDebugString(GetWorld(), point + edges[i] * scale, FString(std::to_string(i).c_str()));
-						DrawDebugSphere(GetWorld(), point + (edges[i] + FVector(+0.1, 0, 0)) * scale, 10 * coeffs[i * 2 + 0], 16, FColor::Blue, false, 0.5f);
-						DrawDebugSphere(GetWorld(), point + (edges[i] + FVector(-0.1, 0, 0)) * scale, 10 * coeffs[i * 2 + 1], 16, FColor::Red, false, 0.5f);
+						float _x = points[i].x;
+						float _y = points[i].z;
+						float _z = points[i].y;
+						FVector point = FVector(_z, _x, _y); // convertion from platfrom
+
+						DrawDebugString(GetWorld(), PlayerPosition + quat * (point * scale), FString(std::to_string(i).c_str()), 0, FColor::White, 0);
+						DrawDebugSphere(GetWorld(), PlayerPosition + quat * ((point + FVector(-0.1, 0, 0)) * scale), 10 * coeffs[i * 2 + 0], 16, FColor::Red, false, 0.5f);
+						DrawDebugSphere(GetWorld(), PlayerPosition + quat * ((point + FVector(+0.1, 0, 0)) * scale), 10 * coeffs[i * 2 + 1], 16, FColor::Blue, false, 0.5f);
 					}
 				}
 
@@ -521,7 +531,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 					info = "Lib Distance:  " + toDebugString(m1Positional.getDist());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 
-					std::string str = "Lib Euler Angles:    " + toDebugString(m1Positional.getCurrentAngle().x) + " , " + toDebugString(m1Positional.getCurrentAngle().y) + " , " + toDebugString(m1Positional.getCurrentAngle().z);
+					std::string str = "Lib Euler Angles:    " + toDebugString(m1Positional.getCurrentAngleInternal().x) + " , " + toDebugString(m1Positional.getCurrentAngleInternal().y) + " , " + toDebugString(m1Positional.getCurrentAngleInternal().z);
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Yellow, str.c_str());
 
 
@@ -532,6 +542,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 					}
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
+  
 			}
 		}
 	}
@@ -551,6 +562,7 @@ void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChange
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
+
 
 void AM1BaseActor::SetVolumeMain(float volume)
 {
