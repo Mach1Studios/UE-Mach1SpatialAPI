@@ -20,7 +20,6 @@
 
 #define MIN_SOUND_VOLUME (KINDA_SMALL_NUMBER*2)
 
-
 template<typename T>
 std::string toDebugString(const T& value)
 {

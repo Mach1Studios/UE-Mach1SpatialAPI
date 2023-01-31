@@ -30,20 +30,7 @@ class MACH1DECODEPLUGIN_API AM1BaseActor : public AActor
 
 protected:
 
-#ifdef LEGACY_POSITIONAL
-
-	// geometric utils
-	static float ClosestPointOnBox(FVector point, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, FVector& closestPoint);
-
-	static bool Clip(float denom, float numer, float& t0, float& t1);
-	static int DoClipping(float t0, float t1, FVector origin, FVector direction, FVector center, FVector axis0, FVector axis1, FVector axis2, FVector extents, bool solid, FVector& point0, FVector& point1);
-
-	void CalculateChannelCoeffs(FQuat quat);
-
-#endif
-
 	static FVector GetEuler(FQuat q1);
-
 	USoundAttenuation* NullAttenuation;
 
 	// Calculated gain coefficients to apply to the spatial mixer's gain-volume per channel
