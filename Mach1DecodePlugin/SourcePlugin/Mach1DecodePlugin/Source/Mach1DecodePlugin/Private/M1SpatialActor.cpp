@@ -33,6 +33,6 @@ void AM1SpatialActor::SetSoundsBlendMode()
 AM1SpatialActor::AM1SpatialActor() 
 {
 	InitComponents(8);
-	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoSpatial);
+	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoSpatial_8);
 }
  

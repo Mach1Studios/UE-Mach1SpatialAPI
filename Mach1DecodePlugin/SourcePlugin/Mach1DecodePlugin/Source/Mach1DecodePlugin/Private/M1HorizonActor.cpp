@@ -26,6 +26,6 @@ void AM1HorizonActor::SetSoundsBlendMode()
 AM1HorizonActor::AM1HorizonActor()
 {
 	InitComponents(4);
-	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon);
+	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon_4);
 }
  
