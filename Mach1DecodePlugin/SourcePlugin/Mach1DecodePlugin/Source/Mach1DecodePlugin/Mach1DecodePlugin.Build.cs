@@ -31,80 +31,85 @@ namespace UnrealBuildTool.Rules
 
         public Mach1DecodePlugin(ReadOnlyTargetRules Target) : base(Target)
         {
-            PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+            bPrecompile = true;
+            //bUsePrecompiled = true;
 
-            PublicIncludePaths.AddRange(
-                new string[] {
-                    "Developer/TargetPlatform/Public"
-                    // ... add public include paths required here ...
-                }
-                );
+            if (!bUsePrecompiled) {
+                PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-            PrivateIncludePaths.AddRange(
-                new string[] {
-                   "Mach1DecodePlugin/Private"
-                    // ... add other private include paths required here ...
-                }
-                );
+                PublicIncludePaths.AddRange(
+                    new string[] {
+                        "Developer/TargetPlatform/Public"
+                        // ... add public include paths required here ...
+                    }
+                    );
 
-             PublicDependencyModuleNames.AddRange(
-                new string[]
+                PrivateIncludePaths.AddRange(
+                    new string[] {
+                       "Mach1DecodePlugin/Private"
+                        // ... add other private include paths required here ...
+                    }
+                    );
+
+                 PublicDependencyModuleNames.AddRange(
+                    new string[]
+                    {
+                        // in UE 4.18 needed HeadMountedDisplay
+                        "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay"
+                        // ... add other public dependencies that you statically link with here ...
+                    }
+                    );
+
+                PrivateDependencyModuleNames.AddRange(
+                    new string[]
+                    {
+                        // ... add private dependencies that you statically link with here ...
+                    }
+                    );
+
+                DynamicallyLoadedModuleNames.AddRange(
+                    new string[]
+                    {
+                        // ... add any modules that your module loads dynamically here ...
+                    }
+                    );
+
+                // add Mach1 library
+                string Mach1BaseDirectory = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "Mach1"));
+                string Mach1BinDirectory = Path.Combine(Mach1BaseDirectory, "bin", Target.Platform.ToString());
+                PublicIncludePaths.Add(Path.Combine(Mach1BaseDirectory, "include"));
+
+                if (Target.Platform == UnrealTargetPlatform.Android)
                 {
-                    // in UE 4.18 needed HeadMountedDisplay
-                    "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay"
-                    // ... add other public dependencies that you statically link with here ...
+                    //Mach1BinDirectory = Path.Combine(Mach1BinDirectory, Target.Architecture);
+                    var archs =  new string[] { "armeabi-v7a", "x86" };
+                    foreach(var arch in archs)
+                    {
+                        PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1DecodeCAPI.a"));
+                        PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1DecodePositionalCAPI.a"));
+                    }
                 }
-                );
-
-            PrivateDependencyModuleNames.AddRange(
-                new string[]
+                else if (Target.Platform == UnrealTargetPlatform.IOS)
                 {
-                    // ... add private dependencies that you statically link with here ...
+                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
+                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
                 }
-                );
-
-            DynamicallyLoadedModuleNames.AddRange(
-                new string[]
+                else if (Target.Platform == UnrealTargetPlatform.Mac)
                 {
-                    // ... add any modules that your module loads dynamically here ...
+                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
+                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
                 }
-                );
+                else if (Target.Platform == UnrealTargetPlatform.Win64)
+                { 
+                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.lib"));
+                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.lib"));
 
-            // add Mach1 library
-            string Mach1BaseDirectory = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "Mach1"));
-            string Mach1BinDirectory = Path.Combine(Mach1BaseDirectory, "bin", Target.Platform.ToString());
-            PublicIncludePaths.Add(Path.Combine(Mach1BaseDirectory, "include"));
+                    RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"));
+                    RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"));
 
-            if (Target.Platform == UnrealTargetPlatform.Android)
-            {
-                //Mach1BinDirectory = Path.Combine(Mach1BinDirectory, Target.Architecture);
-                var archs =  new string[] { "armeabi-v7a", "x86" };
-				foreach(var arch in archs)
-				{
-                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1DecodeCAPI.a"));
-                    PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, arch, "libMach1DecodePositionalCAPI.a"));
+                    CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"), Target);
+                    CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"), Target);
                 }
-            }
-            else if (Target.Platform == UnrealTargetPlatform.IOS)
-            {
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
-            }
-            else if (Target.Platform == UnrealTargetPlatform.Mac)
-            {
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodeCAPI.a"));
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "libMach1DecodePositionalCAPI.a"));
-            }
-            else if (Target.Platform == UnrealTargetPlatform.Win64)
-            { 
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.lib"));
-                PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.lib"));
-
-                RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"));
-                RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"));
-
-                CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"), Target);
-                CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"), Target);
             }
         }
     }
