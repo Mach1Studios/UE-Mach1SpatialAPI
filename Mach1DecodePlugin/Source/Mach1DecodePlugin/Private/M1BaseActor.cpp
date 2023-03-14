@@ -37,21 +37,6 @@ std::string toDebugString<FVector>(const FVector& value)
 	oss << std::fixed << "(" << value.X << ", " << value.Y << ", " << value.Z << ")";
 	return oss.str();
 }
- 
-FVector AM1BaseActor::GetEuler(FQuat q1)
-{
-	float sq = q1.X * q1.Y + q1.Z * q1.W;
-	float sqx = q1.X * q1.X;
-	float sqy = q1.Y * q1.Y;
-	float sqz = q1.Z * q1.Z;
-
-	return FMath::RadiansToDegrees(FVector(
-		atan2(2.0f * q1.X * q1.W - 2 * q1.Y * q1.Z, 1.0f - 2.0f * sqx - 2.0f * sqz),
-		atan2(2.0f * q1.Y * q1.W - 2 * q1.X * q1.Z, 1.0f - 2.0f * sqy - 2.0f * sqz),
-		sin(2.0f * sq)
-	));
-
-}
 
 Mach1Point3D AM1BaseActor::ConvertToMach1Point3D(FVector vec)
 {
@@ -379,6 +364,18 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				if (manualPawn != nullptr)
 				{
+					TArray<UCameraComponent*> CameraComponents;
+					manualPawn->GetComponents<UCameraComponent>(CameraComponents);
+
+					for (UCameraComponent* CameraComp : CameraComponents)
+					{
+						if (CameraComp->IsActive())
+						{
+							if (useReferenceObjectRotation) PlayerRotation = CameraComp->GetComponentRotation().Quaternion();
+							if (useReferenceObjectPosition) PlayerPosition = CameraComp->GetComponentLocation();
+						}
+					}
+
 					if (useReferenceObjectRotation) PlayerRotation = manualPawn->GetControlRotation().Quaternion();
 					if (useReferenceObjectPosition) PlayerPosition = manualPawn->GetActorLocation();
 				}
@@ -389,31 +386,26 @@ void AM1BaseActor::Tick(float DeltaTime)
 				}
 				else if (manualCameraActor != nullptr)
 				{
-					if (useReferenceObjectRotation) PlayerRotation = manualCameraActor->GetActorRotation().Quaternion();
-					if (useReferenceObjectPosition) PlayerPosition = manualCameraActor->GetActorLocation();
+					if (useReferenceObjectRotation) PlayerRotation = manualCameraActor->GetCameraComponent()->GetComponentRotation().Quaternion();
+					if (useReferenceObjectPosition) PlayerPosition = manualCameraActor->GetCameraComponent()->GetComponentLocation();
 				}
-
-				if (ForceHMDRotation && UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+				else if (ForceHMDRotation && UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 				{
 					FRotator hmdRotator;
 					FVector hmdPosition;
 					UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(hmdRotator, hmdPosition);
 
-					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(hmdRotator.Quaternion().Euler().X, hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
-
-					PlayerRotation = PlayerRotation * hmdQuat; 
-					PlayerPosition = PlayerPosition + hmdPosition;
+					PlayerRotation = hmdRotator.Quaternion();
+					PlayerPosition = hmdPosition;
 				}
 				else
 				{
 					APlayerCameraManager* playerCameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
-					FRotator hmdRotator = playerCameraManager->GetCameraRotation();
-					FVector hmdPosition = playerCameraManager->GetCameraLocation();
+					FRotator cameraRotator = playerCameraManager->GetCameraRotation();
+					FVector cameraPosition = playerCameraManager->GetCameraLocation();
 
-					FQuat hmdQuat = FQuat::MakeFromEuler(FVector(hmdRotator.Quaternion().Euler().X, hmdRotator.Quaternion().Euler().Y, hmdRotator.Quaternion().Euler().Z));
-
-					PlayerRotation = PlayerRotation * hmdQuat;
-					PlayerPosition = PlayerPosition + playerPawn->GetActorLocation(); // + hmdPosition
+					PlayerRotation = cameraRotator.Quaternion();
+					PlayerPosition = cameraPosition;
 				}
 
 				PlayerRotation = PlayerRotation * FQuat::MakeFromEuler(cameraManualAngleOffset);
@@ -456,6 +448,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				m1Positional.setListenerPosition(ConvertToMach1Point3D(PlayerPosition));
 
 				FVector listenerAngle = (PlayerRotation.Euler());
+
 				m1Positional.setListenerRotation(ConvertToMach1Point3D(listenerAngle));
 				//m1Positional.setListenerRotationQuat(ConvertToMach1Point4D(PlayerRotation));
 
@@ -513,10 +506,9 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 					for (int i = 0; i < 8; i++)
 					{
-						float _x = points[i].x;
-						float _y = points[i].z;
-						float _z = points[i].y;
-						FVector point = FVector(_z, _x, _y); // convertion from platfrom
+						Mach1Point3D p = points[i];
+						(std::swap)(p.y, p.z); // convert to glm
+						FVector point = FVector(p.z, p.x, p.y); // convertion to platfrom
 
 						DrawDebugString(GetWorld(), PlayerPosition + quat * (point * scale), FString(std::to_string(i).c_str()), 0, FColor::White, 0);
 						DrawDebugSphere(GetWorld(), PlayerPosition + quat * ((point + FVector(-0.1, 0, 0)) * scale), 10 * coeffs[i * 2 + 0], 16, FColor::Red, false, 0.5f);
