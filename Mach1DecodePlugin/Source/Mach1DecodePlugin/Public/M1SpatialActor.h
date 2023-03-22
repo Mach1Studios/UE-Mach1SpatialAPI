@@ -22,52 +22,52 @@ public:
 
 	// Audio positions for the 8channel cube
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain1;
+		USoundBase* ChannelMain1;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain2;
+		USoundBase* ChannelMain2;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain3;
+		USoundBase* ChannelMain3;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain4;
+		USoundBase* ChannelMain4;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain5;
+		USoundBase* ChannelMain5;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain6;
+		USoundBase* ChannelMain6;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain7;
+		USoundBase* ChannelMain7;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain8;
+		USoundBase* ChannelMain8;
 
 
 	// Audio positions for the 8channel cube
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend1;
+		USoundBase* ChannelBlend1;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend2;
+		USoundBase* ChannelBlend2;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend3;
+		USoundBase* ChannelBlend3;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend4;
+		USoundBase* ChannelBlend4;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend5;
+		USoundBase* ChannelBlend5;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend6;
+		USoundBase* ChannelBlend6;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend7;
+		USoundBase* ChannelBlend7;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend8;
+		USoundBase* ChannelBlend8;
 };

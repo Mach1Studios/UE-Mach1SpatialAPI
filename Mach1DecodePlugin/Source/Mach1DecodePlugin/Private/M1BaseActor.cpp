@@ -49,9 +49,9 @@ Mach1Point4D AM1BaseActor::ConvertToMach1Point4D(FQuat quat)
 }
 
 // Sets default values
-void AM1BaseActor::InitComponents(int32 InMaxSoundsPerChannel)
+void AM1BaseActor::InitComponents(int32 MaxSpatialInputChannels)
 {
-	this->MAX_SOUNDS_PER_CHANNEL = InMaxSoundsPerChannel;
+	this->MAX_INPUT_CHANNELS = MaxSpatialInputChannels;
 
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -70,14 +70,14 @@ void AM1BaseActor::InitComponents(int32 InMaxSoundsPerChannel)
 	Billboard->SetHiddenInGame(false);
 	Billboard->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 
-	LeftChannelsMain.SetNum(MAX_SOUNDS_PER_CHANNEL);
-	RightChannelsMain.SetNum(MAX_SOUNDS_PER_CHANNEL);
+	LeftChannelsMain.SetNum(MAX_INPUT_CHANNELS);
+	RightChannelsMain.SetNum(MAX_INPUT_CHANNELS);
 
-	LeftChannelsBlend.SetNum(MAX_SOUNDS_PER_CHANNEL);
-	RightChannelsBlend.SetNum(MAX_SOUNDS_PER_CHANNEL);
+	LeftChannelsBlend.SetNum(MAX_INPUT_CHANNELS);
+	RightChannelsBlend.SetNum(MAX_INPUT_CHANNELS);
 
 	Volume = 1;
-	for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++) GainCoeffs.Add(1);
+	for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++) GainCoeffs.Add(1);
 
 	m1Positional.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
 }
@@ -112,7 +112,7 @@ void AM1BaseActor::Init()
 			NullAttenuation->Attenuation.bAttenuate = false;
 			NullAttenuation->Attenuation.bSpatialize = true;
 
-			for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 			{
 				LeftChannelsMain[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeWalls %d_L_%d"), GetUniqueID(), i)));
 				RightChannelsMain[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeWalls %d_R_%d"), GetUniqueID(), i)));
@@ -132,7 +132,7 @@ void AM1BaseActor::Init()
 
 			if (useBlendMode)
 			{
-				for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+				for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 				{
 					LeftChannelsBlend[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeCenter %d_L_%d"), GetUniqueID(), i)));
 					RightChannelsBlend[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeCenter %d_R_%d"), GetUniqueID(), i)));
@@ -163,7 +163,7 @@ void AM1BaseActor::SetSoundSet()
 
 		SetSoundsMain();
 
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			if (SoundsMain[i])
 			{
@@ -175,7 +175,7 @@ void AM1BaseActor::SetSoundSet()
 			}
 		}
 
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			if (SoundsMain[i])
 			{
@@ -190,7 +190,7 @@ void AM1BaseActor::SetSoundSet()
 
 			SetSoundsBlendMode();
 
-			for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 			{
 				if (SoundsBlendMode[i])
 				{
@@ -202,7 +202,7 @@ void AM1BaseActor::SetSoundSet()
 				}
 			}
 
-			for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 			{
 				if (SoundsBlendMode[i])
 				{
@@ -218,7 +218,7 @@ void AM1BaseActor::Play()
 {
 	if (isInited)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsMain[i]->FadeIn(fadeInDuration);
 			RightChannelsMain[i]->FadeIn(fadeInDuration);
@@ -227,7 +227,7 @@ void AM1BaseActor::Play()
 
 	if (isInited && useBlendMode)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsBlend[i]->FadeIn(fadeInDuration);
 			RightChannelsBlend[i]->FadeIn(fadeInDuration);
@@ -244,7 +244,7 @@ void AM1BaseActor::Pause()
 {
 	if (isInited)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsMain[i]->SetPaused(true);
 			RightChannelsMain[i]->SetPaused(true);
@@ -253,7 +253,7 @@ void AM1BaseActor::Pause()
 
 	if (isInited && useBlendMode)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsBlend[i]->SetPaused(true);
 			RightChannelsBlend[i]->SetPaused(true);
@@ -265,7 +265,7 @@ void AM1BaseActor::Resume()
 {
 	if (isInited)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsMain[i]->SetPaused(false);
 			RightChannelsMain[i]->SetPaused(false);
@@ -274,7 +274,7 @@ void AM1BaseActor::Resume()
 
 	if (isInited && useBlendMode)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsBlend[i]->SetPaused(false);
 			RightChannelsBlend[i]->SetPaused(false);
@@ -286,7 +286,7 @@ void AM1BaseActor::Seek(float time)
 {
 	if (isInited)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsMain[i]->Play(time);
 			RightChannelsMain[i]->Play(time);
@@ -295,7 +295,7 @@ void AM1BaseActor::Seek(float time)
 
 	if (isInited && useBlendMode)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsBlend[i]->Play(time);
 			RightChannelsBlend[i]->Play(time);
@@ -307,7 +307,7 @@ void AM1BaseActor::Stop()
 {
 	if (isInited)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsMain[i]->FadeOut(fadeOutDuration, 0);
 			RightChannelsMain[i]->FadeOut(fadeOutDuration, 0);
@@ -316,7 +316,7 @@ void AM1BaseActor::Stop()
 
 	if (isInited && useBlendMode)
 	{
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			LeftChannelsBlend[i]->FadeOut(fadeOutDuration, 0);
 			RightChannelsBlend[i]->FadeOut(fadeOutDuration, 0);
@@ -470,7 +470,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				float coeffs[18];
 				m1Positional.getCoefficients(coeffs);
-				for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
+				for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
 				{
 					GainCoeffs[i] = coeffs[i];
 				}
@@ -480,7 +480,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				m1Positional.getCoefficientsInterior(coeffsInterior);
 				if (useBlendMode)
 				{
-					for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
+					for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
 					{
 						GainCoeffs[i] = coeffsInterior[i];
 					}
@@ -527,7 +527,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 
 					info = "Coeffs:  ";
-					for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL * 2; i++)
+					for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
 					{
 						info += toDebugString(coeffs[i]) + ", ";
 					}
@@ -562,7 +562,7 @@ void AM1BaseActor::SetVolumeMain(float volume)
 		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
 		float newVolume = 0;
 
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			newVolume = GainCoeffs[i * 2] * masterGain;
 			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
@@ -582,7 +582,7 @@ void AM1BaseActor::SetVolumeBlend(float volume)
 		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
 		float newVolume = 0;
 
-		for (int i = 0; i < MAX_SOUNDS_PER_CHANNEL; i++)
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
 			newVolume = GainCoeffs[i * 2] * masterGain;
 			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
@@ -601,4 +601,40 @@ void AM1BaseActor::SetSoundsMain()
 
 void AM1BaseActor::SetSoundsBlendMode()
 {
+}
+
+TArray<USoundBase*> AM1BaseActor::GetSoundsMain()
+{
+	return SoundsMain;
+}
+
+TArray<USoundBase*> AM1BaseActor::GetSoundsBlendMode()
+{
+	return SoundsBlendMode;
+}
+
+TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsMain()
+{
+	TArray<UAudioComponent*> arrayOfAllPlayerComponents;
+	for (UAudioComponent* componentL : LeftChannelsMain) {
+		arrayOfAllPlayerComponents.Add(componentL);
+	}
+
+	for (UAudioComponent* componentR : RightChannelsMain) {
+		arrayOfAllPlayerComponents.Add(componentR);
+	}
+	return arrayOfAllPlayerComponents;
+}
+
+TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsBlendMode()
+{
+	TArray<UAudioComponent*> arrayOfAllPlayerComponents;
+	for (UAudioComponent* componentL : LeftChannelsBlend) {
+		arrayOfAllPlayerComponents.Add(componentL);
+	}
+
+	for (UAudioComponent* componentR : RightChannelsBlend) {
+		arrayOfAllPlayerComponents.Add(componentR);
+	}
+	return arrayOfAllPlayerComponents;
 }

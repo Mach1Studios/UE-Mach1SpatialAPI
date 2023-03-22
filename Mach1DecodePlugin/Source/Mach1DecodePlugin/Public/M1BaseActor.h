@@ -36,11 +36,11 @@ protected:
 	// Calculated gain coefficients to apply to the spatial mixer's gain-volume per channel
 	TArray<float> GainCoeffs;
 
-	TArray<USoundWave*> SoundsMain;
+	TArray<USoundBase*> SoundsMain;
 	TArray<UAudioComponent*> LeftChannelsMain;
 	TArray<UAudioComponent*> RightChannelsMain;
 
-	TArray<USoundWave*> SoundsBlendMode;
+	TArray<USoundBase*> SoundsBlendMode;
 	TArray<UAudioComponent*> LeftChannelsBlend;
 	TArray<UAudioComponent*> RightChannelsBlend;
 
@@ -48,7 +48,7 @@ protected:
 	UBoxComponent* Collision;
 	UBillboardComponent* Billboard;
 
-	int MAX_SOUNDS_PER_CHANNEL;
+	int MAX_INPUT_CHANNELS;
 	bool isInited;
 	bool needToPlayAfterInit; 
 
@@ -67,7 +67,7 @@ protected:
 
 public:
 
-	void InitComponents(int32 InMaxSoundsPerChannel);
+	void InitComponents(int32 MaxSpatialInputChannels);
 
 	// Called when the game starts or when spawned
 	void BeginPlay(); // overriden
@@ -110,20 +110,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Display Debug")
 		bool Debug = false;
 
-	UFUNCTION(BlueprintCallable, Category = "Trigger Options")
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Play();
 
-	UFUNCTION(BlueprintCallable, Category = "Trigger Options")
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Pause();
 
-	UFUNCTION(BlueprintCallable, Category = "Trigger Options")
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Resume();
 
-	UFUNCTION(BlueprintCallable, Category = "Trigger Options")
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Seek(float time);
 
-	UFUNCTION(BlueprintCallable, Category = "Trigger Options")
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Stop();
+
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
+		TArray<USoundBase*> GetSoundsMain();
+
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
+		TArray<USoundBase*> GetSoundsBlendMode();
+
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
+		TArray<UAudioComponent*> GetAudioComponentsMain();
+
+	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
+		TArray<UAudioComponent*> GetAudioComponentsBlendMode();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger Options", DisplayName = "Autoplay")
 		bool autoplay = false;
