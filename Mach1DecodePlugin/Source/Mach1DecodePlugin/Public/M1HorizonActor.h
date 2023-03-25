@@ -20,7 +20,7 @@ public:
 	// Sets default values for this actor's properties
 	AM1HorizonActor();
 
-	// Audio positions for the 8channel cube
+	// Audio positions for the 4channel quad
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
 		USoundBase* ChannelMain1;
 
@@ -33,8 +33,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
 		USoundBase* ChannelMain4;
 
-
-	// Audio positions for the 8channel cube
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
 		USoundBase* ChannelBlend1;
 

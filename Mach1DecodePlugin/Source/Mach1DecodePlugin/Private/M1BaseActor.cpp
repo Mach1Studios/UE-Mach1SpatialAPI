@@ -16,44 +16,12 @@
 #include "Kismet/KismetMathLibrary.h"
 #endif
 
-#include <sstream>
-
-#define MIN_SOUND_VOLUME (KINDA_SMALL_NUMBER*2)
-
-template<typename T>
-std::string toDebugString(const T& value)
-{
-	std::ostringstream oss;
-	oss.precision(2);
-	oss << std::fixed << value;
-	return oss.str();
-}
-
-template < >
-std::string toDebugString<FVector>(const FVector& value)
-{
-	std::ostringstream oss;
-	oss.precision(2);
-	oss << std::fixed << "(" << value.X << ", " << value.Y << ", " << value.Z << ")";
-	return oss.str();
-}
-
-Mach1Point3D AM1BaseActor::ConvertToMach1Point3D(FVector vec)
-{
-	return Mach1Point3D{ (float)vec.X, (float)vec.Y, (float)vec.Z };
-}
-
-Mach1Point4D AM1BaseActor::ConvertToMach1Point4D(FQuat quat)
-{
-	return Mach1Point4D{ (float)quat.X, (float)quat.Y, (float)quat.Z, (float)quat.W };
-}
-
 // Sets default values
 void AM1BaseActor::InitComponents(int32 MaxSpatialInputChannels)
 {
 	this->MAX_INPUT_CHANNELS = MaxSpatialInputChannels;
 
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
@@ -341,10 +309,6 @@ void AM1BaseActor::BeginPlay()
 	}
 }
 
-void PrintDebug(const char* str) {
-	UE_LOG(LogTemp, Warning, TEXT("%s\r\n"), *FString(str));
-}
-
 // Called every frame
 void AM1BaseActor::Tick(float DeltaTime)
 {
@@ -415,26 +379,25 @@ void AM1BaseActor::Tick(float DeltaTime)
 				if (Debug) {
 					std::string info;
 
-					info = "Camera Rotation:  " + toDebugString(PlayerRotation.Euler());
-					PrintDebug(info.c_str());
+					info = "Camera Rotation:  " + M1Common::toDebugString(PlayerRotation.Euler());
+					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
-					info = "Camera Position:  " + toDebugString(PlayerPosition);
-					PrintDebug(info.c_str());
+					info = "Camera Position:  " + M1Common::toDebugString(PlayerPosition);
+					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
-					info = "Actor Rotation:  " + toDebugString(GetActorRotation().Quaternion().Euler());
-					PrintDebug(info.c_str());
+					info = "Actor Rotation:  " + M1Common::toDebugString(GetActorRotation().Quaternion().Euler());
+					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
-					info = "Actor Position:  " + toDebugString(GetActorLocation());
-					PrintDebug(info.c_str());
+					info = "Actor Position:  " + M1Common::toDebugString(GetActorLocation());
+					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
 
 				float masterGain = Volume;
  
-
 				m1Positional.setUseBlendMode(useBlendMode);
 				m1Positional.setIgnoreTopBottom(ignoreTopBottom);
 				m1Positional.setMuteWhenOutsideObject(muteWhenOutsideObject);
@@ -445,20 +408,20 @@ void AM1BaseActor::Tick(float DeltaTime)
 				m1Positional.setUsePitchForRotation(usePitchForRotation);
 				m1Positional.setUseRollForRotation(useRollForRotation);
 
-				m1Positional.setListenerPosition(ConvertToMach1Point3D(PlayerPosition));
+				m1Positional.setListenerPosition(M1Common::ConvertToMach1Point3D(PlayerPosition));
 
 				FVector listenerAngle = (PlayerRotation.Euler());
 
-				m1Positional.setListenerRotation(ConvertToMach1Point3D(listenerAngle));
-				//m1Positional.setListenerRotationQuat(ConvertToMach1Point4D(PlayerRotation));
+				m1Positional.setListenerRotation(M1Common::ConvertToMach1Point3D(listenerAngle));
+				//m1Positional.setListenerRotationQuat(M1Common::ConvertToMach1Point4D(PlayerRotation));
 
-				m1Positional.setDecoderAlgoPosition(ConvertToMach1Point3D(GetActorLocation()));
+				m1Positional.setDecoderAlgoPosition(M1Common::ConvertToMach1Point3D(GetActorLocation()));
 
 				FVector decoderAngle = (GetActorRotation().Euler());
-				m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(decoderAngle));
-				//m1Positional.setDecoderAlgoRotationQuat(ConvertToMach1Point4D(GetActorRotation().Quaternion()));
+				m1Positional.setDecoderAlgoRotation(M1Common::ConvertToMach1Point3D(decoderAngle));
+				//m1Positional.setDecoderAlgoRotationQuat(M1Common::ConvertToMach1Point4D(GetActorRotation().Quaternion()));
 
-				m1Positional.setDecoderAlgoScale(ConvertToMach1Point3D(scale));
+				m1Positional.setDecoderAlgoScale(M1Common::ConvertToMach1Point3D(scale));
 
 				m1Positional.evaluatePositionResults();
 
@@ -519,17 +482,17 @@ void AM1BaseActor::Tick(float DeltaTime)
 				if (Debug)
 				{
 					std::string info;
-					info = "Lib Distance:  " + toDebugString(m1Positional.getDist());
+					info = "Lib Distance:  " + M1Common::toDebugString(m1Positional.getDist());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Purple, info.c_str());
 
-					std::string str = "Lib Euler Angles:    " + toDebugString(m1Positional.getCurrentAngleInternal().x) + " , " + toDebugString(m1Positional.getCurrentAngleInternal().y) + " , " + toDebugString(m1Positional.getCurrentAngleInternal().z);
+					std::string str = "Lib Euler Angles:    " + M1Common::toDebugString(m1Positional.getCurrentAngleInternal().x) + " , " + M1Common::toDebugString(m1Positional.getCurrentAngleInternal().y) + " , " + M1Common::toDebugString(m1Positional.getCurrentAngleInternal().z);
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Yellow, str.c_str());
 
 
 					info = "Coeffs:  ";
 					for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
 					{
-						info += toDebugString(coeffs[i]) + ", ";
+						info += M1Common::toDebugString(coeffs[i]) + ", ";
 					}
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
