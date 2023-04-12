@@ -11,24 +11,6 @@ namespace UnrealBuildTool.Rules
             return Directory.GetParent(ModuleDirectory).Parent.Parent.Parent.FullName;
         } 
 
-        private void CopyToBinaries(string Filepath, ReadOnlyTargetRules Target)
-        {
-            //string binariesDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "Binaries", Target.Platform.ToString()));
-            string binariesDir = Path.Combine(GetUProjectPath(), "Binaries", Target.Platform.ToString());
-            string filename = Path.GetFileName(Filepath);
-
-            if (!Directory.Exists(binariesDir))
-                Directory.CreateDirectory(binariesDir);
-
-            string FilepathTo = Path.Combine(binariesDir, filename);
-            System.Console.WriteLine("Copy: " + Filepath  + " to " + FilepathTo);
-
-            if (!File.Exists(FilepathTo))
-            {
-                File.Copy(Filepath, FilepathTo, true);
-            }
-        }
-
         public Mach1DecodePlugin(ReadOnlyTargetRules Target) : base(Target)
         {
             bPrecompile = true;
@@ -104,11 +86,8 @@ namespace UnrealBuildTool.Rules
                     PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.lib"));
                     PublicAdditionalLibraries.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.lib"));
 
-                    RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"));
-                    RuntimeDependencies.Add(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"));
-
-                    CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"), Target);
-                    CopyToBinaries(Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"), Target);
+                    RuntimeDependencies.Add("$(TargetOutputDir)/Mach1DecodeCAPI.dll", Path.Combine(Mach1BinDirectory, "Mach1DecodeCAPI.dll"));
+                    RuntimeDependencies.Add("$(TargetOutputDir)/Mach1DecodePositionalCAPI.dll", Path.Combine(Mach1BinDirectory, "Mach1DecodePositionalCAPI.dll"));
                 }
             }
         }
