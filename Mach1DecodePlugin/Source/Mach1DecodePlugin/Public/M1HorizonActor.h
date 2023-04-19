@@ -20,31 +20,29 @@ public:
 	// Sets default values for this actor's properties
 	AM1HorizonActor();
 
-	// Audio positions for the 8channel cube
+	// Audio positions for the 4channel quad
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain1;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain2;
+		USoundBase* ChannelMain1;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain3;
+		USoundBase* ChannelMain2;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
-		USoundWave* ChannelMain4;
+		USoundBase* ChannelMain3;
 
-
-	// Audio positions for the 8channel cube
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend1;
+	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
+		USoundBase* ChannelMain4;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend2;
+		USoundBase* ChannelBlend1;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend3;
+		USoundBase* ChannelBlend2;
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundWave* ChannelBlend4;
+		USoundBase* ChannelBlend3;
+
+	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
+		USoundBase* ChannelBlend4;
 
 };

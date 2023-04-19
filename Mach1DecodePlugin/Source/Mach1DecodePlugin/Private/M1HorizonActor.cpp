@@ -3,9 +3,7 @@
 //
 
 #include "M1HorizonActor.h"
-
 #include "Mach1DecodePluginPrivatePCH.h"
-
 
 void AM1HorizonActor::SetSoundsMain()
 {

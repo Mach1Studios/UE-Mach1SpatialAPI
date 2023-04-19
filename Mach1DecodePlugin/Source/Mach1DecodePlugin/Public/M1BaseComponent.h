@@ -1,14 +1,12 @@
-﻿//  Mach1 SDK
+//  Mach1 SDK
 //  Copyright © 2017 Mach1. All rights reserved.
 //
 
 #pragma once
 
-#include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
-#include "Components/BoxComponent.h"
+#include "Components/ActorComponent.h"
 #include "Components/AudioComponent.h" 
-#include "Components/BillboardComponent.h"
 #include "Components/SceneCaptureComponent.h"
 #include "Camera/CameraComponent.h"
 
@@ -18,19 +16,18 @@
 
 #include <vector>
 
-#include "M1BaseActor.generated.h"
+#include "M1BaseComponent.generated.h"
 
 class ACameraActor;
 
 //#define LEGACY_POSITIONAL
 
 UCLASS(abstract)
-class MACH1DECODEPLUGIN_API AM1BaseActor : public AActor
+class MACH1DECODEPLUGIN_API UM1BaseComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 protected:
-
 	static FVector GetEuler(FQuat q1);
 	USoundAttenuation* NullAttenuation;
 
@@ -41,13 +38,10 @@ protected:
 	TArray<UAudioComponent*> LeftChannelsMain;
 	TArray<UAudioComponent*> RightChannelsMain;
 
-	TArray<USoundBase*> SoundsBlendMode;
-	TArray<UAudioComponent*> LeftChannelsBlend;
-	TArray<UAudioComponent*> RightChannelsBlend;
-
-	USceneComponent* Root;
-	UBoxComponent* Collision;
-	UBillboardComponent* Billboard;
+	USceneComponent* ParentComponent = nullptr;
+	USceneComponent* listenerReferenceComponent = nullptr;
+	FVector PlayerPosition;
+	FQuat PlayerRotation;
 
 	int MAX_INPUT_CHANNELS;
 	bool isInited;
@@ -56,32 +50,22 @@ protected:
 	void Init();
 	void SetSoundSet();
 	void SetVolumeMain(float volume);
-	void SetVolumeBlend(float volume);
-
 	virtual void SetSoundsMain();
-	virtual void SetSoundsBlendMode();
 
 	Mach1DecodePositional m1Positional;
 
 public:
-
 	void InitComponents(int32 MaxSpatialInputChannels);
 
 	// Called when the game starts or when spawned
 	void BeginPlay(); // overriden
 
 	// Called every frame
-	void Tick(float DeltaSeconds); // overriden
+	void TickComponent(float DeltaSeconds, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction); // overriden
 
-	// always tick
-	bool ShouldTickIfViewportsOnly() const override { return true; }
-	#if WITH_EDITOR
-	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	#endif
-
-	/** When true automatically get the orientation from the first indexed camera's rotations, tends to not include rotations applied to parent/pawn. When false automatically use PlayerCameraManager which tends to capture all rotations applied to an HMD or camera. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Force HMD rotation instead of Player Controller")
-		bool ForceHMDRotation = false;
+	/** When true automatically get the orientation from the first indexed camera's rotations. When false automatically use the parent component's Position and Rotation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Find PlayerPawn Camera and Attach Automatically")
+		bool AttachToPlayerPawnCamera = true;
 
 	/** Use this to apply an additional rotation offset. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Camera Offset")
@@ -127,13 +111,7 @@ public:
 		TArray<USoundBase*> GetSoundsMain();
 
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
-		TArray<USoundBase*> GetSoundsBlendMode();
-
-	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		TArray<UAudioComponent*> GetAudioComponentsMain();
-
-	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
-		TArray<UAudioComponent*> GetAudioComponentsBlendMode();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger Options", DisplayName = "Autoplay")
 		bool autoplay = false;
@@ -147,8 +125,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger Options", DisplayName = "Fade Out Duration")
 		float fadeOutDuration = 0;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attenuation & Rotation Settings", DisplayName = "Use Falloff")
-		bool useFalloff = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attenuation & Rotation Settings", DisplayName = "Use Attenuation")
+		bool useAttenuation = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attenuation & Rotation Settings", DisplayName = "Attenuation Curve")
 		UCurveFloat* attenuationCurve;
@@ -170,13 +148,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attenuation & Rotation Settings", DisplayName = "Use Roll for Positional Rotation")
 		bool useRollForRotation = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blend Mode (beta)", DisplayName = "Use Blend Mode")
-		bool useBlendMode = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blend Mode (beta)", DisplayName = "Attenuation BlendMode Curve")
-		UCurveFloat* attenuationBlendModeCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blend Mode (beta)", DisplayName = "Ignore Top Bottom Planes in BlendMode")
-		bool ignoreTopBottom = true;
 };
