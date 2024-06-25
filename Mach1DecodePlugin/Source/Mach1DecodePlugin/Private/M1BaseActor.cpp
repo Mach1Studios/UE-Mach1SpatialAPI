@@ -408,19 +408,24 @@ void AM1BaseActor::Tick(float DeltaTime)
 				m1Positional.setUsePitchForRotation(usePitchForRotation);
 				m1Positional.setUseRollForRotation(useRollForRotation);
 
+				// Listener
 				m1Positional.setListenerPosition(M1Common::ConvertToMach1Point3D(PlayerPosition));
-
 				FVector listenerAngle = (PlayerRotation.Euler());
-
 				m1Positional.setListenerRotation(M1Common::ConvertToMach1Point3D(listenerAngle));
 				//m1Positional.setListenerRotationQuat(M1Common::ConvertToMach1Point4D(PlayerRotation));
 
+				// Decoder
 				m1Positional.setDecoderAlgoPosition(M1Common::ConvertToMach1Point3D(GetActorLocation()));
-
-				FVector decoderAngle = (GetActorRotation().Euler());
-				m1Positional.setDecoderAlgoRotation(M1Common::ConvertToMach1Point3D(decoderAngle));
-				//m1Positional.setDecoderAlgoRotationQuat(M1Common::ConvertToMach1Point4D(GetActorRotation().Quaternion()));
-
+				// Allow use of GameObject's transform.rotation as an additional offset rotator for the Decode API
+	            if (useDecodeRotationOffset)
+	            {
+	            	FVector decoderAngle = (GetActorRotation().Euler());
+					m1Positional.setDecoderAlgoRotation(M1Common::ConvertToMach1Point3D(decoderAngle));
+	            } else
+	            {
+	                // This allows us to treat the GameObject as a point instead of using its shape as an additional rotator
+	                m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(new Vector3(0.0f, 0.0f, 0.0f)));
+	            }
 				m1Positional.setDecoderAlgoScale(M1Common::ConvertToMach1Point3D(scale));
 
 				m1Positional.evaluatePositionResults();
