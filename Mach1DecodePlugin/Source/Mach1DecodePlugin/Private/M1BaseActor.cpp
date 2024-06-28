@@ -250,7 +250,7 @@ void AM1BaseActor::Resume()
 	}
 }
 
-void AM1BaseActor::Seek(float time)
+void AM1BaseActor::Seek(float timeInSeconds)
 {
 	if (isInited)
 	{
@@ -265,8 +265,8 @@ void AM1BaseActor::Seek(float time)
 	{
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			LeftChannelsBlend[i]->Play(time);
-			RightChannelsBlend[i]->Play(time);
+			LeftChannelsBlend[i]->Play(timeInSeconds);
+			RightChannelsBlend[i]->Play(timeInSeconds);
 		}
 	}
 }
