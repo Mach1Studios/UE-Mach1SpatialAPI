@@ -256,8 +256,8 @@ void AM1BaseActor::Seek(float time)
 	{
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			LeftChannelsMain[i]->Play(time);
-			RightChannelsMain[i]->Play(time);
+			LeftChannelsMain[i]->Play(timeInSeconds);
+			RightChannelsMain[i]->Play(timeInSeconds);
 		}
 	}
 
@@ -325,6 +325,8 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				FQuat PlayerRotation = FQuat::Identity;
 				FVector PlayerPosition = FVector(0, 0, 0);
+				FQuat ObjRotation = FQuat::Identity;
+				FVector ObjPosition = FVector(0, 0, 0);
 
 				if (manualPawn != nullptr)
 				{
@@ -335,23 +337,23 @@ void AM1BaseActor::Tick(float DeltaTime)
 					{
 						if (CameraComp->IsActive())
 						{
-							if (useReferenceObjectRotation) PlayerRotation = CameraComp->GetComponentRotation().Quaternion();
-							if (useReferenceObjectPosition) PlayerPosition = CameraComp->GetComponentLocation();
+							PlayerRotation = CameraComp->GetComponentRotation().Quaternion();
+							PlayerPosition = CameraComp->GetComponentLocation();
 						}
 					}
 
-					if (useReferenceObjectRotation) PlayerRotation = manualPawn->GetControlRotation().Quaternion();
-					if (useReferenceObjectPosition) PlayerPosition = manualPawn->GetActorLocation();
+					PlayerRotation = manualPawn->GetControlRotation().Quaternion();
+					PlayerPosition = manualPawn->GetActorLocation();
 				}
 				else if (manualActor != nullptr)
 				{
-					if (useReferenceObjectRotation) PlayerRotation = manualActor->GetActorRotation().Quaternion();
-					if (useReferenceObjectPosition) PlayerPosition = manualActor->GetActorLocation();
+					PlayerRotation = manualActor->GetActorRotation().Quaternion();
+					PlayerPosition = manualActor->GetActorLocation();
 				}
 				else if (manualCameraActor != nullptr)
 				{
-					if (useReferenceObjectRotation) PlayerRotation = manualCameraActor->GetCameraComponent()->GetComponentRotation().Quaternion();
-					if (useReferenceObjectPosition) PlayerPosition = manualCameraActor->GetCameraComponent()->GetComponentLocation();
+					PlayerRotation = manualCameraActor->GetCameraComponent()->GetComponentRotation().Quaternion();
+					PlayerPosition = manualCameraActor->GetCameraComponent()->GetComponentLocation();
 				}
 				else if (ForceHMDRotation && UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 				{
@@ -376,6 +378,10 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				FVector scale = Collision->GetScaledBoxExtent(); 
 
+				// M1 Reference object pos/rot
+				if (useReferenceObjectPosition) ObjPosition = GetActorLocation();
+				if (useDecodeRotationOffset) ObjRotation = GetActorRotation().Quaternion();
+
 				if (Debug) {
 					std::string info;
 
@@ -387,11 +393,11 @@ void AM1BaseActor::Tick(float DeltaTime)
 					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
-					info = "Actor Rotation:  " + M1Common::toDebugString(GetActorRotation().Quaternion().Euler());
+					info = "Actor Rotation:  " + M1Common::toDebugString(ObjRotation.Euler());
 					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 
-					info = "Actor Position:  " + M1Common::toDebugString(GetActorLocation());
+					info = "Actor Position:  " + M1Common::toDebugString(ObjPosition);
 					M1Common::PrintDebug(info.c_str());
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
@@ -415,7 +421,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 				//m1Positional.setListenerRotationQuat(M1Common::ConvertToMach1Point4D(PlayerRotation));
 
 				// Decoder
-				m1Positional.setDecoderAlgoPosition(M1Common::ConvertToMach1Point3D(GetActorLocation()));
+				m1Positional.setDecoderAlgoPosition(M1Common::ConvertToMach1Point3D(ObjPosition));
 				// Allow use of GameObject's transform.rotation as an additional offset rotator for the Decode API
 	            if (useDecodeRotationOffset)
 	            {
@@ -454,8 +460,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					}
 					SetVolumeBlend(1.0);
 				}
-
-			
 
 				if (Debug) {
 					Mach1Point3D points[] = {
@@ -501,7 +505,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					}
 					GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Green, info.c_str());
 				}
-  
 			}
 		}
 	}

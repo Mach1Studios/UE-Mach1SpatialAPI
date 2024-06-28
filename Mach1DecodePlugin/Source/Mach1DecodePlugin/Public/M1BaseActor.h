@@ -84,14 +84,11 @@ public:
 		bool ForceHMDRotation = false;
 
 	/** Use this to apply an additional rotation offset. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Camera Offset")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Manual Camera Rotation Offset")
 		FVector cameraManualAngleOffset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Override Reference Object Position")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Use Reference Object Position")
 		bool useReferenceObjectPosition = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Override Reference Object Rotation")
-		bool useReferenceObjectRotation = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Add an additional rotation offset from Reference Object Rotation")
 		bool useDecodeRotationOffset = false;
@@ -120,8 +117,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Resume();
 
+	/** Plays mix at a specific time in seconds. Use Pause/Resume to control play/stop flow if needed. */
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
-		void Seek(float time);
+		void Seek(float timeInSeconds);
 
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Stop();
