@@ -90,7 +90,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Use Reference Object Position")
 		bool useReferenceObjectPosition = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Add an additional rotation offset from Reference Object Rotation")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Class Settings", DisplayName = "Add Rotation offset from Reference Object Rotation")
 		bool useDecodeRotationOffset = false;
 
 	/** Reference a manual Pawn instead of the automatically found first indexed camera. */
