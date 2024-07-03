@@ -37,7 +37,7 @@ namespace UnrealBuildTool.Rules
                     new string[]
                     {
                         // in UE 4.18 needed HeadMountedDisplay
-                        "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay"
+                        "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "XRBase"
                         // ... add other public dependencies that you statically link with here ...
                     }
                     );

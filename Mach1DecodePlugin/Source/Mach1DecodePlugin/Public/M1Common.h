@@ -8,7 +8,9 @@
 #include "Mach1DecodePositional.h"
 #include <sstream>
 
-#define SMALL_NUMBER 0
+#ifndef SMALL_NUMBER
+    #define SMALL_NUMBER 0
+#endif
 #define MIN_SOUND_VOLUME (SMALL_NUMBER*2) // used if you want to make sure components never go silent and are restarted by UE
 
 class M1Common {
@@ -22,8 +24,7 @@ public:
 		return oss.str();
 	}
 
-	template < >
-	static std::string toDebugString<FVector>(const FVector& value)
+	static std::string toDebugString(const FVector& value)
 	{
 		std::ostringstream oss;
 		oss.precision(2);

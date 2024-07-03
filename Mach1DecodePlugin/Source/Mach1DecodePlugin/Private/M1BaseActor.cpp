@@ -430,7 +430,7 @@ void AM1BaseActor::Tick(float DeltaTime)
 	            } else
 	            {
 	                // This allows us to treat the GameObject as a point instead of using its shape as an additional rotator
-	                m1Positional.setDecoderAlgoRotation(ConvertToMach1Point3D(new Vector3(0.0f, 0.0f, 0.0f)));
+                    m1Positional.setDecoderAlgoRotation({ 0, 0, 0 });
 	            }
 				m1Positional.setDecoderAlgoScale(M1Common::ConvertToMach1Point3D(scale));
 
