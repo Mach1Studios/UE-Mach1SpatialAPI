@@ -1,5 +1,5 @@
 //  Mach1 SDK
-//  Copyright © 2017 Mach1. All rights reserved.
+//  Copyright ï¿½ 2017 Mach1. All rights reserved.
 //
 
 #include "M1HorizonActor.h"
@@ -13,17 +13,9 @@ void AM1HorizonActor::SetSoundsMain()
 	SoundsMain.Add(ChannelMain4);
 }
 
-void AM1HorizonActor::SetSoundsBlendMode()
-{
-	SoundsBlendMode.Add(ChannelBlend1);
-	SoundsBlendMode.Add(ChannelBlend2);
-	SoundsBlendMode.Add(ChannelBlend3);
-	SoundsBlendMode.Add(ChannelBlend4);
-}
-
 AM1HorizonActor::AM1HorizonActor()
 {
 	InitComponents(4);
-	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon_4);
+	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoSpatial_4);
 }
  

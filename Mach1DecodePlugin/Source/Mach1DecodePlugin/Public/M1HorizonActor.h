@@ -33,16 +33,4 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
 		USoundBase* ChannelMain4;
 
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend1;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend2;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend3;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend4;
-
 };

@@ -25,7 +25,7 @@ class Mach1Decode {
     std::vector<float> decode(float Yaw, float Pitch, float Roll, int bufferSize = 0, int sampleIndex = 0);
     std::vector<float> decodeCoeffs(int bufferSize = 0, int sampleIndex = 0);
     std::vector<float> decodePannedCoeffs(int bufferSize = 0, int sampleIndex = 0, bool applyPanLaw = true);
-    std::vector<float> decodeCoeffsUsingTranscodeMatrix(std::vector<std::vector<float>> matrix, int channels, int bufferSize = 0, int sampleIndex = 0);
+    std::vector<float> decodeCoeffsUsingTranscodeMatrix(std::vector< std::vector<float> > matrix, int channels, int bufferSize = 0, int sampleIndex = 0);
 
     int getFormatChannelCount();
     int getFormatCoeffCount();
@@ -36,11 +36,8 @@ class Mach1Decode {
 
     void setFilterSpeed(float filterSpeed);
 
-    void beginBuffer();
-    void endBuffer();
-
     template <typename T>
-    void decodeBuffer(std::vector<std::vector<T>> *inBuffer, std::vector<std::vector<T>> *outBuffer, int inputPoints, int bufferSize);
+    void decodeBuffer(std::vector< std::vector<T> > *inBuffer, std::vector< std::vector<T> > *outBuffer, int inputPoints, int bufferSize);
 
     template <typename T>
     void decodeBuffer(std::vector<T *> *inBuffer, std::vector<T *> *outBuffer, int inputPoints, int bufferSize);
@@ -56,9 +53,7 @@ class Mach1Decode {
 };
 
 template <typename T>
-void Mach1Decode::decodeBuffer(std::vector<std::vector<T>> *inBuffer, std::vector<std::vector<T>> *outBuffer, int inputPoints, int bufferSize) {
-    beginBuffer();
-
+void Mach1Decode::decodeBuffer(std::vector< std::vector<T> > *inBuffer, std::vector< std::vector<T> > *outBuffer, int inputPoints, int bufferSize) {
     T sample = 0;
     int cOffset = 0;
     int inputChannelsCount = inBuffer->size() / inputPoints;
@@ -80,24 +75,19 @@ void Mach1Decode::decodeBuffer(std::vector<std::vector<T>> *inBuffer, std::vecto
 
         for (size_t c = 0; c < outChannelsCount; c++) {
             sample = 0;
-            cOffset = c < inputPoints ? c : 0;
+            cOffset = c < inputPoints ? (int)c : 0;
             for (size_t k = 0; k < inputChannelsCount; k++) {
                 sample += inBuffer->operator[](k * inputPoints + cOffset)[i] * vol[k * 2 + c];
             }
             outBuffer->operator[](c)[i] = sample;
         }
     }
-
-    endBuffer();
 }
 
 template <typename T>
 void Mach1Decode::decodeBuffer(std::vector<T *> *inBuffer, std::vector<T *> *outBuffer, int inputPoints, int bufferSize) {
-    beginBuffer();
-
     T sample = 0;
     int offset = 0;
-
     std::vector<float> startVolumes = decodeCoeffs(bufferSize, 0);
     std::vector<float> endVolumes = decodeCoeffs(bufferSize, bufferSize);
     std::vector<float> volumes(inBuffer->size() * 2);
@@ -114,13 +104,11 @@ void Mach1Decode::decodeBuffer(std::vector<T *> *inBuffer, std::vector<T *> *out
 
         for (size_t c = 0; c < outBuffer->size(); c++) {
             sample = 0;
-            offset = c < inputPoints ? c : 0;
+            offset = c < inputPoints ? (int)c : 0;
             for (size_t k = 0; k < inBuffer->size(); k++) {
                 sample += inBuffer->operator[](k * inputPoints + offset)[i] * vol[k * 2 + c];
             }
             outBuffer->operator[](c)[i] = sample;
         }
     }
-
-    endBuffer();
 }

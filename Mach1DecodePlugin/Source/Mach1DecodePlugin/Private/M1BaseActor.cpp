@@ -1,4 +1,4 @@
-﻿//  Mach1 SDK
+//  Mach1 SDK
 //  Copyright © 2017 Mach1. All rights reserved.
 //
 
@@ -40,9 +40,6 @@ void AM1BaseActor::InitComponents(int32 MaxSpatialInputChannels)
 
 	LeftChannelsMain.SetNum(MAX_INPUT_CHANNELS);
 	RightChannelsMain.SetNum(MAX_INPUT_CHANNELS);
-
-	LeftChannelsBlend.SetNum(MAX_INPUT_CHANNELS);
-	RightChannelsBlend.SetNum(MAX_INPUT_CHANNELS);
 
 	Volume = 1;
 	for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++) GainCoeffs.Add(1);
@@ -98,26 +95,6 @@ void AM1BaseActor::Init()
 				RightChannelsMain[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform);
 			}
 
-			if (useBlendMode)
-			{
-				for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-				{
-					LeftChannelsBlend[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeCenter %d_L_%d"), GetUniqueID(), i)));
-					RightChannelsBlend[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeCenter %d_R_%d"), GetUniqueID(), i)));
-
-					LeftChannelsBlend[i]->RegisterComponent(); // only for runtime
-					RightChannelsBlend[i]->RegisterComponent(); // only for runtime
-
-					LeftChannelsBlend[i]->SetRelativeLocation(FVector(0, -1, 0));
-					RightChannelsBlend[i]->SetRelativeLocation(FVector(0, 1, 0));
-
-					LeftChannelsBlend[i]->AttenuationSettings = NullAttenuation;
-					RightChannelsBlend[i]->AttenuationSettings = NullAttenuation;
-
-					LeftChannelsBlend[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform); // AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);//   AttachTo(sceneComponent);
-					RightChannelsBlend[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform);
-				}
-			}
 			isInited = true;
 		}
 	}
@@ -151,34 +128,6 @@ void AM1BaseActor::SetSoundSet()
 				RightChannelsMain[i]->SetSound(SoundsMain[i]);
 			}
 		}
-
-		if (useBlendMode)
-		{
-			SoundsBlendMode.Empty();
-
-			SetSoundsBlendMode();
-
-			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-			{
-				if (SoundsBlendMode[i])
-				{
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
-					SoundsBlendMode[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
-#else
-					SoundsBlendMode[i]->bVirtualizeWhenSilent = true;
-#endif
-				}
-			}
-
-			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-			{
-				if (SoundsBlendMode[i])
-				{
-					LeftChannelsBlend[i]->SetSound(SoundsBlendMode[i]);
-					RightChannelsBlend[i]->SetSound(SoundsBlendMode[i]);
-				}
-			}
-		}
 	}
 }
 
@@ -190,15 +139,6 @@ void AM1BaseActor::Play()
 		{
 			LeftChannelsMain[i]->FadeIn(fadeInDuration);
 			RightChannelsMain[i]->FadeIn(fadeInDuration);
-		}
-	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->FadeIn(fadeInDuration);
-			RightChannelsBlend[i]->FadeIn(fadeInDuration);
 		}
 	}
 
@@ -218,15 +158,6 @@ void AM1BaseActor::Pause()
 			RightChannelsMain[i]->SetPaused(true);
 		}
 	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->SetPaused(true);
-			RightChannelsBlend[i]->SetPaused(true);
-		}
-	}
 }
 
 void AM1BaseActor::Resume()
@@ -237,15 +168,6 @@ void AM1BaseActor::Resume()
 		{
 			LeftChannelsMain[i]->SetPaused(false);
 			RightChannelsMain[i]->SetPaused(false);
-		}
-	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->SetPaused(false);
-			RightChannelsBlend[i]->SetPaused(false);
 		}
 	}
 }
@@ -260,15 +182,6 @@ void AM1BaseActor::Seek(float timeInSeconds)
 			RightChannelsMain[i]->Play(timeInSeconds);
 		}
 	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->Play(timeInSeconds);
-			RightChannelsBlend[i]->Play(timeInSeconds);
-		}
-	}
 }
 
 void AM1BaseActor::Stop()
@@ -279,15 +192,6 @@ void AM1BaseActor::Stop()
 		{
 			LeftChannelsMain[i]->FadeOut(fadeOutDuration, 0);
 			RightChannelsMain[i]->FadeOut(fadeOutDuration, 0);
-		}
-	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->FadeOut(fadeOutDuration, 0);
-			RightChannelsBlend[i]->FadeOut(fadeOutDuration, 0);
 		}
 	}
 	needToPlayAfterInit = false;
@@ -404,8 +308,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				float masterGain = Volume;
  
-				m1Positional.setUseBlendMode(useBlendMode);
-				m1Positional.setIgnoreTopBottom(ignoreTopBottom);
 				m1Positional.setMuteWhenOutsideObject(muteWhenOutsideObject);
 				m1Positional.setMuteWhenInsideObject(muteWhenInsideObject);
 				m1Positional.setUseAttenuation(useFalloff);
@@ -439,7 +341,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 				if (useFalloff)
 				{
 					m1Positional.setAttenuationCurve(attenuationCurve ? attenuationCurve->GetFloatValue(m1Positional.getDist()) : 1);
-					m1Positional.setAttenuationCurveBlendMode(attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(m1Positional.getDist()) : 1);
 				}
 
 				float coeffs[18];
@@ -449,17 +350,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					GainCoeffs[i] = coeffs[i];
 				}
 				SetVolumeMain(1.0);
-
-				float coeffsInterior[18];
-				m1Positional.getCoefficientsInterior(coeffsInterior);
-				if (useBlendMode)
-				{
-					for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
-					{
-						GainCoeffs[i] = coeffsInterior[i];
-					}
-					SetVolumeBlend(1.0);
-				}
 
 				if (Debug) {
 					Mach1Point3D points[] = {
@@ -546,42 +436,13 @@ void AM1BaseActor::SetVolumeMain(float volume)
 	}
 }
 
-void AM1BaseActor::SetVolumeBlend(float volume)
-{
-	if (isInited && useBlendMode)
-	{
-		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
-		float newVolume = 0;
-
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			newVolume = GainCoeffs[i * 2] * masterGain;
-			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
-			LeftChannelsBlend[i]->SetVolumeMultiplier(newVolume);
-
-			newVolume = GainCoeffs[i * 2 + 1] * masterGain;
-			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
-			RightChannelsBlend[i]->SetVolumeMultiplier(newVolume);
-		}
-	}
-}
-
 void AM1BaseActor::SetSoundsMain()
-{
-}
-
-void AM1BaseActor::SetSoundsBlendMode()
 {
 }
 
 TArray<USoundBase*> AM1BaseActor::GetSoundsMain()
 {
 	return SoundsMain;
-}
-
-TArray<USoundBase*> AM1BaseActor::GetSoundsBlendMode()
-{
-	return SoundsBlendMode;
 }
 
 TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsMain()
@@ -592,19 +453,6 @@ TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsMain()
 	}
 
 	for (UAudioComponent* componentR : RightChannelsMain) {
-		arrayOfAllPlayerComponents.Add(componentR);
-	}
-	return arrayOfAllPlayerComponents;
-}
-
-TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsBlendMode()
-{
-	TArray<UAudioComponent*> arrayOfAllPlayerComponents;
-	for (UAudioComponent* componentL : LeftChannelsBlend) {
-		arrayOfAllPlayerComponents.Add(componentL);
-	}
-
-	for (UAudioComponent* componentR : RightChannelsBlend) {
 		arrayOfAllPlayerComponents.Add(componentR);
 	}
 	return arrayOfAllPlayerComponents;

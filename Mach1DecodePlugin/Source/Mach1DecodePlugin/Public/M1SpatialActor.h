@@ -44,30 +44,4 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|Main")
 		USoundBase* ChannelMain8;
-
-
-	// Audio positions for the 8channel cube
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend1;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend2;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend3;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend4;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend5;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend6;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend7;
-
-	UPROPERTY(EditAnywhere, Category = "Mach1 Spatial Files|BlendMode")
-		USoundBase* ChannelBlend8;
 };

@@ -41,10 +41,6 @@ protected:
 	TArray<UAudioComponent*> LeftChannelsMain;
 	TArray<UAudioComponent*> RightChannelsMain;
 
-	TArray<USoundBase*> SoundsBlendMode;
-	TArray<UAudioComponent*> LeftChannelsBlend;
-	TArray<UAudioComponent*> RightChannelsBlend;
-
 	USceneComponent* Root;
 	UBoxComponent* Collision;
 	UBillboardComponent* Billboard;
@@ -56,10 +52,8 @@ protected:
 	void Init();
 	void SetSoundSet();
 	void SetVolumeMain(float volume);
-	void SetVolumeBlend(float volume);
 
 	virtual void SetSoundsMain();
-	virtual void SetSoundsBlendMode();
 
 	Mach1DecodePositional m1Positional;
 
@@ -128,13 +122,7 @@ public:
 		TArray<USoundBase*> GetSoundsMain();
 
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
-		TArray<USoundBase*> GetSoundsBlendMode();
-
-	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		TArray<UAudioComponent*> GetAudioComponentsMain();
-
-	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
-		TArray<UAudioComponent*> GetAudioComponentsBlendMode();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trigger Options", DisplayName = "Autoplay")
 		bool autoplay = false;
@@ -171,13 +159,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attenuation & Rotation Settings", DisplayName = "Use Roll for Positional Rotation")
 		bool useRollForRotation = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blend Mode (beta)", DisplayName = "Use Blend Mode")
-		bool useBlendMode = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blend Mode (beta)", DisplayName = "Attenuation BlendMode Curve")
-		UCurveFloat* attenuationBlendModeCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blend Mode (beta)", DisplayName = "Ignore Top Bottom Planes in BlendMode")
-		bool ignoreTopBottom = true;
 };

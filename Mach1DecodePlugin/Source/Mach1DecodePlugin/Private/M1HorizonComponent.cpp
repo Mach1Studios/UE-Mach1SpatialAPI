@@ -16,6 +16,6 @@ void UM1HorizonComponent::SetSoundsMain()
 UM1HorizonComponent::UM1HorizonComponent()
 {
 	InitComponents(4);
-	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoHorizon_4);
+	m1Positional.setDecodeAlgoType(Mach1DecodeAlgoType::Mach1DecodeAlgoSpatial_4);
 }
  

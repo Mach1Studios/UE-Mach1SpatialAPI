@@ -302,8 +302,6 @@ void UM1BaseComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 	float masterGain = Volume;
 
-	m1Positional.setUseBlendMode(false);
-	m1Positional.setIgnoreTopBottom(false);
 	m1Positional.setMuteWhenOutsideObject(muteWhenOutsideObject);
 	m1Positional.setMuteWhenInsideObject(muteWhenInsideObject);
 	m1Positional.setUseAttenuation(useAttenuation);

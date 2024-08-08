@@ -5,7 +5,6 @@
 
 #include "Mach1Point3D.h"
 #include "Mach1Point4D.h"
-#include <stdbool.h>
 
 #if defined(Mach1DecodeCore_h) || defined(Mach1EncodeCore_h) || defined(Mach1PositionalCore_h) || defined(Mach1TranscodeCore_h) || defined(Mach1AudioTimelineCore_h)
 #    ifndef M1_API
@@ -38,11 +37,10 @@ enum Mach1PlatformType {
 };
 
 enum Mach1DecodeAlgoType {
-    Mach1DecodeAlgoSpatial_8 = (int)0,
-    Mach1DecodeAlgoHorizon_4,
-    Mach1DecodeAlgoHorizonPairs,
+    Mach1DecodeAlgoSpatial_4 = (int)0,
+    Mach1DecodeAlgoSpatial_8,
     Mach1DecodeAlgoSpatial_12,
-    Mach1DecodeAlgoSpatial_14
+    Mach1DecodeAlgoSpatial_14,
 };
 
 #ifdef __cplusplus
@@ -63,21 +61,19 @@ M1_API void Mach1DecodeCAPI_decodePannedCoeffs(void *M1obj, float *result, int b
 M1_API void Mach1DecodeCAPI_decodeCoeffsUsingTranscodeMatrix(void *M1obj, float *matrix, int channels, float *result, int bufferSize, int sampleIndex);
 
 M1_API void Mach1DecodeCAPI_setFilterSpeed(void *M1obj, float filterSpeed);
-M1_API void Mach1DecodeCAPI_beginBuffer(void *M1obj);
-M1_API void Mach1DecodeCAPI_endBuffer(void *M1obj);
-
-M1_API void Mach1DecodeCAPI_setRotation(void *M1obj, struct Mach1Point3D newRotationFromMinusOnetoOne);
-M1_API void Mach1DecodeCAPI_setRotationDegrees(void *M1obj, struct Mach1Point3D newRotationDegrees);
-M1_API void Mach1DecodeCAPI_setRotationRadians(void *M1obj, struct Mach1Point3D newRotationRadians);
-M1_API void Mach1DecodeCAPI_setRotationQuat(void *M1obj, struct Mach1Point4D newRotationQuat);
-
-M1_API struct Mach1Point3D Mach1DecodeCAPI_getCurrentAngle(void *M1obj);
 M1_API int Mach1DecodeCAPI_getFormatChannelCount(void *M1obj);
 M1_API int Mach1DecodeCAPI_getFormatCoeffCount(void *M1obj);
+M1_API void Mach1DecodeCAPI_setRotation(void *M1obj, Mach1Point3D newRotationFromMinusOnetoOne);
+M1_API void Mach1DecodeCAPI_setRotationDegrees(void *M1obj, Mach1Point3D newRotationDegrees);
+M1_API void Mach1DecodeCAPI_setRotationRadians(void *M1obj, Mach1Point3D newRotationRadians);
+M1_API void Mach1DecodeCAPI_setRotationQuat(void *M1obj, Mach1Point4D newRotationQuat);
+
 M1_API long Mach1DecodeCAPI_getCurrentTime(void *M1obj);
 M1_API long Mach1DecodeCAPI_getLastCalculationTime(void *M1obj);
+
 M1_API char *Mach1DecodeCAPI_getLog(void *M1obj);
 
+M1_API Mach1Point3D Mach1DecodeCAPI_getCurrentAngle(void *M1obj);
 #ifdef __cplusplus
 }
 #endif

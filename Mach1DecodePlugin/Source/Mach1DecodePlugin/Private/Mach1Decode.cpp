@@ -32,9 +32,8 @@ void Mach1Decode::setDecodeAlgoType(Mach1DecodeAlgoType newAlgorithmType) {
     /// Set the decoding algorithm
     ///
     /// - Parameters:
-    ///     - Mach1DecodeAlgoSpatial_8 (default spatial | 8 channels)
     ///     - Mach1DecodeAlgoHorizon_4 (compass / yaw | 4 channels)
-    ///     - Mach1DecodeAlgoHorizonPairs (compass / yaw | 4x stereo mastered pairs)
+    ///     - Mach1DecodeAlgoSpatial_8 (spatial | 8 channels)
     ///     - Mach1DecodeAlgoSpatial_12 (higher order spatial | 12 channels)
     ///     - Mach1DecodeAlgoSpatial_14 (higher order spatial | 14 channels)
 }
@@ -122,7 +121,7 @@ std::vector<float> Mach1Decode::decodePannedCoeffs(int bufferSize, int sampleInd
     ///		- applyPanLaw: bool for control over panLaw application
 }
 
-std::vector<float> Mach1Decode::decodeCoeffsUsingTranscodeMatrix(std::vector<std::vector<float>> matrix, int channels, int bufferSize, int sampleIndex) {
+std::vector<float> Mach1Decode::decodeCoeffsUsingTranscodeMatrix(std::vector< std::vector<float> > matrix, int channels, int bufferSize, int sampleIndex) {
     std::vector<float> vec(2 * channels);
 
     int inChans = channels;
@@ -204,16 +203,6 @@ void Mach1Decode::setFilterSpeed(float filterSpeed) {
     /// - Parameters:
     ///     - value range: 0.0001 -> 1.0 (where 0.1 would be a slow filter
     ///     and 1.0 is no filter)
-}
-
-void Mach1Decode::beginBuffer() {
-    Mach1DecodeCAPI_beginBuffer(M1obj);
-    /// Call this function before reading from the Mach1Decode buffer
-}
-
-void Mach1Decode::endBuffer() {
-    Mach1DecodeCAPI_endBuffer(M1obj);
-    /// Call this function after reading from the Mach1Decode buffer
 }
 
 long Mach1Decode::getCurrentTime() {
