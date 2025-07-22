@@ -7,7 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 
-#include "M1BaseActor.h"
+#include "M1DecodeActor.h"
 
 #include <vector>
 #include <thread>
@@ -21,7 +21,7 @@ class MACH1DECODEPLUGIN_API UM1Scheduler : public UBlueprintFunctionLibrary
 
 /*
 	UFUNCTION(BlueprintCallable, Category = "M1 Utility")
-	static inline void PlayArrayAsync(TArray<AM1BaseActor*> AM1Actors) {
+	static inline void PlayArrayAsync(TArray<AM1DecodeActor*> AM1Actors) {
 		for (auto& actor : AM1Actors)
 		{
 			auto t = std::thread([&] {
@@ -34,7 +34,7 @@ class MACH1DECODEPLUGIN_API UM1Scheduler : public UBlueprintFunctionLibrary
 */
 
 	UFUNCTION(BlueprintCallable, Category = "M1 Utility")
-	static inline void PlaySync(TArray<AM1BaseActor*> AM1Actors) {
+	static inline void PlaySync(TArray<AM1DecodeActor*> AM1Actors) {
 		for (auto& actor : AM1Actors)
 		{
 			actor->Play();

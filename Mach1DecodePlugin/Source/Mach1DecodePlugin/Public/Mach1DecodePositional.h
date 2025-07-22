@@ -1,5 +1,5 @@
 //  Mach1 Spatial SDK
-//  Copyright © 2017-2020 Mach1. All rights reserved.
+//  Copyright © 2017 Mach1. All rights reserved.
 
 #pragma once
 
@@ -16,7 +16,7 @@ class Mach1DecodePositional {
     ~Mach1DecodePositional();
 
     void setPlatformType(Mach1PlatformType platformType);
-    void setDecodeAlgoType(Mach1DecodeAlgoType newAlgorithmType);
+    void setDecodeMode(Mach1DecodeMode mode);
 
     // settings
     void setMuteWhenOutsideObject(bool muteWhenOutsideObject);

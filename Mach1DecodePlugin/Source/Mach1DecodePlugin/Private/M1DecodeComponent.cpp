@@ -2,7 +2,7 @@
 //  Copyright © 2017 Mach1. All rights reserved.
 //
 
-#include "M1BaseComponent.h"
+#include "M1DecodeComponent.h"
 #include "Camera/CameraActor.h"
 #include "Runtime/Launch/Resources/Version.h"
 
@@ -16,8 +16,14 @@
 #include "Kismet/KismetMathLibrary.h"
 #endif
 
-// Sets default values
-void UM1BaseComponent::InitComponents(int32 MaxSpatialInputChannels)
+// Sets default values for this component's properties
+UM1DecodeComponent::UM1DecodeComponent()
+{
+	// Call the InitComponents with default maximum channels (14)
+	InitComponents(14);
+}
+
+void UM1DecodeComponent::InitComponents(int32 MaxSpatialInputChannels)
 {
 	this->MAX_INPUT_CHANNELS = MaxSpatialInputChannels;
 
@@ -31,9 +37,12 @@ void UM1BaseComponent::InitComponents(int32 MaxSpatialInputChannels)
 	for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++) GainCoeffs.Add(1);
 
 	m1Positional.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
+	
+	// Set default decode mode
+	UpdateDecodeConfiguration();
 }
 
-void UM1BaseComponent::Init()
+void UM1DecodeComponent::Init()
 {
 	if (!isInited)
 	{
@@ -99,7 +108,7 @@ void UM1BaseComponent::Init()
 	}
 }
 
-void UM1BaseComponent::SetSoundSet()
+void UM1DecodeComponent::SetSoundSet()
 {
 	if (isInited)
 	{
@@ -130,7 +139,7 @@ void UM1BaseComponent::SetSoundSet()
 	}
 }
 
-void UM1BaseComponent::Play()
+void UM1DecodeComponent::Play()
 {
 	if (isInited)
 	{
@@ -147,7 +156,7 @@ void UM1BaseComponent::Play()
 	}
 }
 
-void UM1BaseComponent::Pause()
+void UM1DecodeComponent::Pause()
 {
 	if (isInited)
 	{
@@ -159,7 +168,7 @@ void UM1BaseComponent::Pause()
 	}
 }
 
-void UM1BaseComponent::Resume()
+void UM1DecodeComponent::Resume()
 {
 	if (isInited)
 	{
@@ -171,7 +180,7 @@ void UM1BaseComponent::Resume()
 	}
 }
 
-void UM1BaseComponent::Seek(float time)
+void UM1DecodeComponent::Seek(float time)
 {
 	if (isInited)
 	{
@@ -183,7 +192,7 @@ void UM1BaseComponent::Seek(float time)
 	}
 }
 
-void UM1BaseComponent::Stop()
+void UM1DecodeComponent::Stop()
 {
 	if (isInited)
 	{
@@ -197,7 +206,7 @@ void UM1BaseComponent::Stop()
 }
 
 // Called when the game starts or when spawned
-void UM1BaseComponent::BeginPlay()
+void UM1DecodeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -213,7 +222,7 @@ void UM1BaseComponent::BeginPlay()
 }
 
 // Called every frame
-void UM1BaseComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UM1DecodeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	if (manualPawn != nullptr)
 	{
@@ -382,7 +391,7 @@ void UM1BaseComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	}
 }
 
-void UM1BaseComponent::SetVolumeMain(float volume)
+void UM1DecodeComponent::SetVolumeMain(float volume)
 {
 	if (isInited)
 	{
@@ -402,16 +411,16 @@ void UM1BaseComponent::SetVolumeMain(float volume)
 	}
 }
 
-void UM1BaseComponent::SetSoundsMain()
+void UM1DecodeComponent::SetSoundsMain()
 {
 }
 
-TArray<USoundBase*> UM1BaseComponent::GetSoundsMain()
+TArray<USoundBase*> UM1DecodeComponent::GetSoundsMain()
 {
 	return SoundsMain;
 }
 
-TArray<UAudioComponent*> UM1BaseComponent::GetAudioComponentsMain()
+TArray<UAudioComponent*> UM1DecodeComponent::GetAudioComponentsMain()
 {
 	TArray<UAudioComponent*> arrayOfAllPlayerComponents;
 	for (UAudioComponent* componentL : LeftChannelsMain) {
@@ -422,4 +431,117 @@ TArray<UAudioComponent*> UM1BaseComponent::GetAudioComponentsMain()
 		arrayOfAllPlayerComponents.Add(componentR);
 	}
 	return arrayOfAllPlayerComponents;
+}
+
+// ========== FLEXIBLE DECODE CONFIGURATION METHODS ==========
+
+void UM1DecodeComponent::UpdateDecodeConfiguration()
+{
+	// Set the decode mode based on the selected enum
+	Mach1DecodeMode decodeMode = static_cast<Mach1DecodeMode>(DecodeMode.GetValue());
+	m1Positional.setDecodeMode(decodeMode);
+	
+	// Update the required channel count
+	int requiredChannels = GetRequiredChannelCount();
+	this->MAX_INPUT_CHANNELS = requiredChannels;
+	
+	// Resize audio component arrays if needed
+	if (LeftChannelsMain.Num() < requiredChannels)
+	{
+		LeftChannelsMain.SetNum(requiredChannels);
+		RightChannelsMain.SetNum(requiredChannels);
+	}
+	
+	// Set up sounds based on current configuration
+	SetSoundsBasedOnConfiguration();
+}
+
+void UM1DecodeComponent::SetSoundsBasedOnConfiguration()
+{
+	// Clear existing sound assignments
+	ClearAllSounds();
+	
+	if (InputMode == MultichannelFile_Component)
+	{
+		// Use single multichannel file
+		if (MultichannelAudioFile)
+		{
+			SoundsMain.Add(MultichannelAudioFile);
+		}
+	}
+	else
+	{
+		// Use individual mono channels
+		int channelCount = GetRequiredChannelCount();
+		
+		// Add main channels
+		for (int i = 0; i < channelCount; i++)
+		{
+			USoundBase* channelSound = GetChannelByIndex(i);
+			if (channelSound)
+			{
+				SoundsMain.Add(channelSound);
+			}
+		}
+	}
+}
+
+int UM1DecodeComponent::GetRequiredChannelCount()
+{
+	switch (DecodeMode.GetValue())
+	{
+		case Mach1DecodeMode_Spatial_4_Component:
+			return 4;
+		case Mach1DecodeMode_Spatial_8_Component:
+			return 8;
+		case Mach1DecodeMode_Spatial_14_Component:
+			return 14;
+		default:
+			return 8; // Default to 8-channel
+	}
+}
+
+void UM1DecodeComponent::ClearAllSounds()
+{
+	SoundsMain.Empty();
+}
+
+USoundBase* UM1DecodeComponent::GetChannelByIndex(int index)
+{
+	// Return main channels
+	switch (index)
+	{
+		case 0: return Channel1;
+		case 1: return Channel2;
+		case 2: return Channel3;
+		case 3: return Channel4;
+		case 4: return Channel5;
+		case 5: return Channel6;
+		case 6: return Channel7;
+		case 7: return Channel8;
+		case 8: return Channel9;
+		case 9: return Channel10;
+		case 10: return Channel11;
+		case 11: return Channel12;
+		case 12: return Channel13;
+		case 13: return Channel14;
+		default: return nullptr;
+	}
+}
+
+int UM1DecodeComponent::GetCurrentChannelCount()
+{
+	return GetRequiredChannelCount();
+}
+
+void UM1DecodeComponent::RefreshDecodeConfiguration()
+{
+	UpdateDecodeConfiguration();
+	
+	// If already initialized, update the audio components
+	if (isInited)
+	{
+		// Re-initialize with new configuration
+		SetSoundSet();
+	}
 }

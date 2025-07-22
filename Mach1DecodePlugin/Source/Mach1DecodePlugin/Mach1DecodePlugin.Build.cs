@@ -17,11 +17,15 @@ namespace UnrealBuildTool.Rules
             
             PublicIncludePaths.Add("Developer/TargetPlatform/Public");
 
+            // Add GLM include paths from ThirdParty
+            string ThirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty"));
+            PublicSystemIncludePaths.Add(Path.Combine(ThirdPartyDir, "glm"));
+            PublicSystemIncludePaths.Add(Path.Combine(ThirdPartyDir, "glm/glm"));
+
             PublicDependencyModuleNames.AddRange(
                 new string[]
                 {
-                    // in UE 4.18 needed HeadMountedDisplay
-                    "Core", "CoreUObject", "Engine", "InputCore", "Mach1DecodeAPI", "HeadMountedDisplay", "XRBase"
+                    "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "XRBase"
                 }
             );
         }
