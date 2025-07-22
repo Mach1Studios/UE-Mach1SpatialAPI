@@ -1,8 +1,8 @@
-﻿//  Mach1 SDK
+//  Mach1 SDK
 //  Copyright © 2017 Mach1. All rights reserved.
 //
 
-#include "M1BaseActor.h"
+#include "M1DecodeActor.h"
 #include "Camera/CameraActor.h"
 #include "Runtime/Launch/Resources/Version.h"
 
@@ -16,10 +16,17 @@
 #include "Kismet/KismetMathLibrary.h"
 #endif
 
-// Sets default values
-void AM1BaseActor::InitComponents(int32 MaxSpatialInputChannels)
+// Sets default values for this actor's properties
+AM1DecodeActor::AM1DecodeActor()
 {
-	this->MAX_INPUT_CHANNELS = MaxSpatialInputChannels;
+	// Call the InitComponents with default maximum channels (14)
+	InitComponents(14);
+}
+
+void AM1DecodeActor::InitComponents(int32 MaxSpatialInputChannels)
+{
+	// Default to max channels but will be adjusted based on decode algorithm
+	this->MAX_INPUT_CHANNELS = FMath::Max(MaxSpatialInputChannels, 14); // Support up to 14 channels
 
 	// Set this actor to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -41,16 +48,16 @@ void AM1BaseActor::InitComponents(int32 MaxSpatialInputChannels)
 	LeftChannelsMain.SetNum(MAX_INPUT_CHANNELS);
 	RightChannelsMain.SetNum(MAX_INPUT_CHANNELS);
 
-	LeftChannelsBlend.SetNum(MAX_INPUT_CHANNELS);
-	RightChannelsBlend.SetNum(MAX_INPUT_CHANNELS);
-
 	Volume = 1;
 	for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++) GainCoeffs.Add(1);
 
 	m1Positional.setPlatformType(Mach1PlatformType::Mach1PlatformUE);
+	
+	// Set default decode mode
+	UpdateDecodeConfiguration();
 }
 
-void AM1BaseActor::Init()
+void AM1DecodeActor::Init()
 {
 	if (!isInited)
 	{
@@ -98,32 +105,12 @@ void AM1BaseActor::Init()
 				RightChannelsMain[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform);
 			}
 
-			if (useBlendMode)
-			{
-				for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-				{
-					LeftChannelsBlend[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeCenter %d_L_%d"), GetUniqueID(), i)));
-					RightChannelsBlend[i] = NewObject <UAudioComponent>(cameraComponent, FName(*FString::Printf(TEXT("SoundCubeCenter %d_R_%d"), GetUniqueID(), i)));
-
-					LeftChannelsBlend[i]->RegisterComponent(); // only for runtime
-					RightChannelsBlend[i]->RegisterComponent(); // only for runtime
-
-					LeftChannelsBlend[i]->SetRelativeLocation(FVector(0, -1, 0));
-					RightChannelsBlend[i]->SetRelativeLocation(FVector(0, 1, 0));
-
-					LeftChannelsBlend[i]->AttenuationSettings = NullAttenuation;
-					RightChannelsBlend[i]->AttenuationSettings = NullAttenuation;
-
-					LeftChannelsBlend[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform); // AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);//   AttachTo(sceneComponent);
-					RightChannelsBlend[i]->AttachToComponent(cameraComponent, FAttachmentTransformRules::KeepRelativeTransform);
-				}
-			}
 			isInited = true;
 		}
 	}
 }
 
-void AM1BaseActor::SetSoundSet()
+void AM1DecodeActor::SetSoundSet()
 {
 	if (isInited)
 	{
@@ -151,38 +138,10 @@ void AM1BaseActor::SetSoundSet()
 				RightChannelsMain[i]->SetSound(SoundsMain[i]);
 			}
 		}
-
-		if (useBlendMode)
-		{
-			SoundsBlendMode.Empty();
-
-			SetSoundsBlendMode();
-
-			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-			{
-				if (SoundsBlendMode[i])
-				{
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
-					SoundsBlendMode[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
-#else
-					SoundsBlendMode[i]->bVirtualizeWhenSilent = true;
-#endif
-				}
-			}
-
-			for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-			{
-				if (SoundsBlendMode[i])
-				{
-					LeftChannelsBlend[i]->SetSound(SoundsBlendMode[i]);
-					RightChannelsBlend[i]->SetSound(SoundsBlendMode[i]);
-				}
-			}
-		}
 	}
 }
 
-void AM1BaseActor::Play()
+void AM1DecodeActor::Play()
 {
 	if (isInited)
 	{
@@ -193,22 +152,13 @@ void AM1BaseActor::Play()
 		}
 	}
 
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->FadeIn(fadeInDuration);
-			RightChannelsBlend[i]->FadeIn(fadeInDuration);
-		}
-	}
-
 	if (!isInited)
 	{
 		needToPlayAfterInit = true;
 	}
 }
 
-void AM1BaseActor::Pause()
+void AM1DecodeActor::Pause()
 {
 	if (isInited)
 	{
@@ -218,18 +168,9 @@ void AM1BaseActor::Pause()
 			RightChannelsMain[i]->SetPaused(true);
 		}
 	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->SetPaused(true);
-			RightChannelsBlend[i]->SetPaused(true);
-		}
-	}
 }
 
-void AM1BaseActor::Resume()
+void AM1DecodeActor::Resume()
 {
 	if (isInited)
 	{
@@ -239,18 +180,9 @@ void AM1BaseActor::Resume()
 			RightChannelsMain[i]->SetPaused(false);
 		}
 	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->SetPaused(false);
-			RightChannelsBlend[i]->SetPaused(false);
-		}
-	}
 }
 
-void AM1BaseActor::Seek(float timeInSeconds)
+void AM1DecodeActor::Seek(float timeInSeconds)
 {
 	if (isInited)
 	{
@@ -260,18 +192,9 @@ void AM1BaseActor::Seek(float timeInSeconds)
 			RightChannelsMain[i]->Play(timeInSeconds);
 		}
 	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->Play(timeInSeconds);
-			RightChannelsBlend[i]->Play(timeInSeconds);
-		}
-	}
 }
 
-void AM1BaseActor::Stop()
+void AM1DecodeActor::Stop()
 {
 	if (isInited)
 	{
@@ -281,20 +204,11 @@ void AM1BaseActor::Stop()
 			RightChannelsMain[i]->FadeOut(fadeOutDuration, 0);
 		}
 	}
-
-	if (isInited && useBlendMode)
-	{
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			LeftChannelsBlend[i]->FadeOut(fadeOutDuration, 0);
-			RightChannelsBlend[i]->FadeOut(fadeOutDuration, 0);
-		}
-	}
 	needToPlayAfterInit = false;
 }
 
 // Called when the game starts or when spawned
-void AM1BaseActor::BeginPlay()
+void AM1DecodeActor::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -310,7 +224,7 @@ void AM1BaseActor::BeginPlay()
 }
 
 // Called every frame
-void AM1BaseActor::Tick(float DeltaTime)
+void AM1DecodeActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -404,8 +318,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 
 				float masterGain = Volume;
  
-				m1Positional.setUseBlendMode(useBlendMode);
-				m1Positional.setIgnoreTopBottom(ignoreTopBottom);
 				m1Positional.setMuteWhenOutsideObject(muteWhenOutsideObject);
 				m1Positional.setMuteWhenInsideObject(muteWhenInsideObject);
 				m1Positional.setUseAttenuation(useFalloff);
@@ -439,7 +351,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 				if (useFalloff)
 				{
 					m1Positional.setAttenuationCurve(attenuationCurve ? attenuationCurve->GetFloatValue(m1Positional.getDist()) : 1);
-					m1Positional.setAttenuationCurveBlendMode(attenuationBlendModeCurve ? attenuationBlendModeCurve->GetFloatValue(m1Positional.getDist()) : 1);
 				}
 
 				float coeffs[18];
@@ -449,17 +360,6 @@ void AM1BaseActor::Tick(float DeltaTime)
 					GainCoeffs[i] = coeffs[i];
 				}
 				SetVolumeMain(1.0);
-
-				float coeffsInterior[18];
-				m1Positional.getCoefficientsInterior(coeffsInterior);
-				if (useBlendMode)
-				{
-					for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
-					{
-						GainCoeffs[i] = coeffsInterior[i];
-					}
-					SetVolumeBlend(1.0);
-				}
 
 				if (Debug) {
 					Mach1Point3D points[] = {
@@ -511,14 +411,25 @@ void AM1BaseActor::Tick(float DeltaTime)
 }
 
 #if WITH_EDITOR
-void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEvent)
+void AM1DecodeActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.Property != NULL)
 	{
-		if (PropertyChangedEvent.Property->GetFName() == FName(TEXT("Debug")))
+		FString PropertyName = PropertyChangedEvent.Property->GetName();
+		
+		if (PropertyName == TEXT("Debug"))
 		{
 			Collision->SetHiddenInGame(!Debug);
 			Billboard->SetHiddenInGame(!Debug);
+		}
+		
+		// Refresh configuration if decode-related properties changed
+		if (PropertyName.Contains("DecodeMode") || 
+			PropertyName.Contains("InputMode") || 
+			PropertyName.Contains("Channel") ||
+			PropertyName.Contains("Multichannel"))
+		{
+			RefreshDecodeConfiguration();
 		}
 	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -526,7 +437,7 @@ void AM1BaseActor::PostEditChangeProperty(FPropertyChangedEvent & PropertyChange
 #endif
 
 
-void AM1BaseActor::SetVolumeMain(float volume)
+void AM1DecodeActor::SetVolumeMain(float volume)
 {
 	if (isInited)
 	{
@@ -546,45 +457,16 @@ void AM1BaseActor::SetVolumeMain(float volume)
 	}
 }
 
-void AM1BaseActor::SetVolumeBlend(float volume)
-{
-	if (isInited && useBlendMode)
-	{
-		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
-		float newVolume = 0;
-
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			newVolume = GainCoeffs[i * 2] * masterGain;
-			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
-			LeftChannelsBlend[i]->SetVolumeMultiplier(newVolume);
-
-			newVolume = GainCoeffs[i * 2 + 1] * masterGain;
-			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
-			RightChannelsBlend[i]->SetVolumeMultiplier(newVolume);
-		}
-	}
-}
-
-void AM1BaseActor::SetSoundsMain()
+void AM1DecodeActor::SetSoundsMain()
 {
 }
 
-void AM1BaseActor::SetSoundsBlendMode()
-{
-}
-
-TArray<USoundBase*> AM1BaseActor::GetSoundsMain()
+TArray<USoundBase*> AM1DecodeActor::GetSoundsMain()
 {
 	return SoundsMain;
 }
 
-TArray<USoundBase*> AM1BaseActor::GetSoundsBlendMode()
-{
-	return SoundsBlendMode;
-}
-
-TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsMain()
+TArray<UAudioComponent*> AM1DecodeActor::GetAudioComponentsMain()
 {
 	TArray<UAudioComponent*> arrayOfAllPlayerComponents;
 	for (UAudioComponent* componentL : LeftChannelsMain) {
@@ -597,15 +479,115 @@ TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsMain()
 	return arrayOfAllPlayerComponents;
 }
 
-TArray<UAudioComponent*> AM1BaseActor::GetAudioComponentsBlendMode()
-{
-	TArray<UAudioComponent*> arrayOfAllPlayerComponents;
-	for (UAudioComponent* componentL : LeftChannelsBlend) {
-		arrayOfAllPlayerComponents.Add(componentL);
-	}
+// ========== NEW FLEXIBLE DECODE METHODS ==========
 
-	for (UAudioComponent* componentR : RightChannelsBlend) {
-		arrayOfAllPlayerComponents.Add(componentR);
+void AM1DecodeActor::UpdateDecodeConfiguration()
+{
+	// Set the decode mode based on the selected enum
+	Mach1DecodeMode decodeMode = static_cast<Mach1DecodeMode>(DecodeMode.GetValue());
+	m1Positional.setDecodeMode(decodeMode);
+	
+	// Update the required channel count
+	int requiredChannels = GetRequiredChannelCount();
+	this->MAX_INPUT_CHANNELS = requiredChannels;
+	
+	// Resize audio component arrays if needed
+	if (LeftChannelsMain.Num() < requiredChannels)
+	{
+		LeftChannelsMain.SetNum(requiredChannels);
+		RightChannelsMain.SetNum(requiredChannels);
 	}
-	return arrayOfAllPlayerComponents;
+	
+	// Set up sounds based on current configuration
+	SetSoundsBasedOnConfiguration();
+}
+
+void AM1DecodeActor::SetSoundsBasedOnConfiguration()
+{
+	// Clear existing sound assignments
+	ClearAllSounds();
+	
+	if (InputMode == MultichannelFile)
+	{
+		// Use single multichannel file
+		if (MultichannelAudioFile)
+		{
+			SoundsMain.Add(MultichannelAudioFile);
+		}
+	}
+	else
+	{
+		// Use individual mono channels
+		int channelCount = GetRequiredChannelCount();
+		
+		// Add main channels
+		for (int i = 0; i < channelCount; i++)
+		{
+			USoundBase* channelSound = GetChannelByIndex(i);
+			if (channelSound)
+			{
+				SoundsMain.Add(channelSound);
+			}
+		}
+	}
+}
+
+int AM1DecodeActor::GetRequiredChannelCount()
+{
+	switch (DecodeMode.GetValue())
+	{
+		case Mach1DecodeMode_Spatial_4:
+			return 4;
+		case Mach1DecodeMode_Spatial_8:
+			return 8;
+		case Mach1DecodeMode_Spatial_14:
+			return 14;
+		default:
+			return 8; // Default to 8-channel
+	}
+}
+
+void AM1DecodeActor::ClearAllSounds()
+{
+	SoundsMain.Empty();
+}
+
+USoundBase* AM1DecodeActor::GetChannelByIndex(int index)
+{
+	// Return main channels
+	switch (index)
+	{
+		case 0: return Channel1;
+		case 1: return Channel2;
+		case 2: return Channel3;
+		case 3: return Channel4;
+		case 4: return Channel5;
+		case 5: return Channel6;
+		case 6: return Channel7;
+		case 7: return Channel8;
+		case 8: return Channel9;
+		case 9: return Channel10;
+		case 10: return Channel11;
+		case 11: return Channel12;
+		case 12: return Channel13;
+		case 13: return Channel14;
+		default: return nullptr;
+	}
+}
+
+int AM1DecodeActor::GetCurrentChannelCount()
+{
+	return GetRequiredChannelCount();
+}
+
+void AM1DecodeActor::RefreshDecodeConfiguration()
+{
+	UpdateDecodeConfiguration();
+	
+	// If already initialized, update the audio components
+	if (isInited)
+	{
+		// Re-initialize with new configuration
+		SetSoundSet();
+	}
 }

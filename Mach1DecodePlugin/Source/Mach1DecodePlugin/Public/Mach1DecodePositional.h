@@ -1,11 +1,8 @@
 //  Mach1 Spatial SDK
-//  Copyright © 2017-2020 Mach1. All rights reserved.
+//  Copyright © 2017 Mach1. All rights reserved.
 
 #pragma once
 
-#include <algorithm>
-#include <chrono>
-#include <cmath>
 #include <string>
 #include <vector>
 
@@ -19,18 +16,14 @@ class Mach1DecodePositional {
     ~Mach1DecodePositional();
 
     void setPlatformType(Mach1PlatformType platformType);
-    void setDecodeAlgoType(Mach1DecodeAlgoType newAlgorithmType);
+    void setDecodeMode(Mach1DecodeMode mode);
 
     // settings
-    void setUseBlendMode(bool useBlendMode);
-    void setIgnoreTopBottom(bool ignoreTopBottom);
-
     void setMuteWhenOutsideObject(bool muteWhenOutsideObject);
     void setMuteWhenInsideObject(bool muteWhenInsideObject);
 
     void setUseAttenuation(bool useAttenuation);
     void setAttenuationCurve(float attenuationCurve);
-    void setAttenuationCurveBlendMode(float attenuationCurveBlendMode);
 
     void setUsePlaneCalculation(bool usePlaneCalculation);
 
@@ -50,12 +43,12 @@ class Mach1DecodePositional {
 
 #ifndef __EMSCRIPTEN__
     void getCoefficients(float *result);
-    void getCoefficientsInterior(float *result);
 #endif
     void getCoefficients(std::vector<float> &result);
-    void getCoefficientsInterior(std::vector<float> &result);
 
     float getDist();
+    int getFormatChannelCount();
+    int getFormatCoeffCount();
     Mach1Point3D getCurrentAngle();
     Mach1Point3D getCurrentAngleInternal();
     Mach1Point3D getPositionalRotation();
