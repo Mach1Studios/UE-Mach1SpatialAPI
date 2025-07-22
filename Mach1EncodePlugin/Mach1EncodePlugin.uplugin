@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "Mach1 Spatial Encode Plugin",
+	"Description": "Encoding for VVBP Mach1 Spatial format from various input formats",
+	"Category": "Audio",
+	"CreatedBy": "Mach1",
+	"CreatedByURL": "http://mach1.tech",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "info@mach1.tech",
+	"EnabledByDefault": true,
+	"CanContainContent": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "Mach1EncodePlugin",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen",
+			"WhitelistPlatforms": [
+				"Win64",
+				"Mac",
+				"Android",
+				"IOS"
+			]
+		}
+	]
+} 
