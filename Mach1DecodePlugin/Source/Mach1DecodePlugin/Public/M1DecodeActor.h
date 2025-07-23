@@ -34,13 +34,7 @@ enum EMach1DecodeMode
 	Mach1DecodeMode_Spatial_14 = 2 UMETA(DisplayName = "Spatial 14-Channel")
 };
 
-// Input mode for Mach1 decode
-UENUM(BlueprintType)
-enum EMach1InputMode
-{
-	IndividualMonoChannels = 0 	UMETA(DisplayName = "Individual Mono Channels"),
-	MultichannelFile = 1 		UMETA(DisplayName = "Single Multichannel File")
-};
+// Mach1 Decode now uses only Individual Mono Channels for clean processing
 
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MACH1DECODEPLUGIN_API AM1DecodeActor : public AActor
@@ -79,6 +73,11 @@ protected:
 	int GetRequiredChannelCount();
 	void ClearAllSounds();
 	USoundBase* GetChannelByIndex(int index);
+
+	// Audio playback management
+	void StopAllAudioComponents();
+	void SetupIndividualChannelPlayback();
+	void SetVolumeIndividualChannels(float masterGain);
 
 	Mach1DecodePositional m1Positional;
 
@@ -136,42 +135,40 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Decode Configuration", DisplayName = "Decode Mode")
 		TEnumAsByte<EMach1DecodeMode> DecodeMode = Mach1DecodeMode_Spatial_8;
 
-	/** Choose input mode: Individual mono channels or single multichannel file */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Decode Configuration", DisplayName = "Input Mode")
-		TEnumAsByte<EMach1InputMode> InputMode = IndividualMonoChannels;
+	// Multi-mono is now the only input mode - cleaner and more reliable
 
 	// ========== INDIVIDUAL MONO CHANNEL INPUTS ==========
 	
 	/** Channel 1 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 1", meta = (EditCondition = "InputMode == IndividualMonoChannels"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 1")
 		USoundBase* Channel1;
 
 	/** Channel 2 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 2", meta = (EditCondition = "InputMode == IndividualMonoChannels"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 2")
 		USoundBase* Channel2;
 
 	/** Channel 3 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 3", meta = (EditCondition = "InputMode == IndividualMonoChannels"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 3")
 		USoundBase* Channel3;
 
 	/** Channel 4 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 4", meta = (EditCondition = "InputMode == IndividualMonoChannels"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 4")
 		USoundBase* Channel4;
 
 	/** Channel 5 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 5", meta = (EditCondition = "InputMode == IndividualMonoChannels && (DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 5", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel5;
 
 	/** Channel 6 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 6", meta = (EditCondition = "InputMode == IndividualMonoChannels && (DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 6", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel6;
 
 	/** Channel 7 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 7", meta = (EditCondition = "InputMode == IndividualMonoChannels && (DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 7", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel7;
 
 	/** Channel 8 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 8", meta = (EditCondition = "InputMode == IndividualMonoChannels && (DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 8", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel8;
 
 	/** Channel 9 - Used for 14+ channel decode types */
@@ -198,11 +195,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 14", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel14;
 
-	// ========== MULTICHANNEL FILE INPUT ==========
-
-	/** Single multichannel audio file containing all Mach1 channels */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Multichannel File", DisplayName = "Multichannel Audio File", meta = (EditCondition = "InputMode == MultichannelFile"))
-		USoundBase* MultichannelAudioFile;
+	// ====================
 
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Play();
@@ -269,4 +262,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attenuation & Rotation Settings", DisplayName = "Use Roll for Positional Rotation")
 		bool useRollForRotation = true;
+
+private:
+	// Audio processing now simplified to multi-mono only
 };

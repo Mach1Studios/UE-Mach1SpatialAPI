@@ -112,30 +112,16 @@ void UM1DecodeComponent::SetSoundSet()
 {
 	if (isInited)
 	{
+		// First, stop all audio to prevent overlapping playback
+		StopAllAudioComponents();
+		
 		SoundsMain.Empty();
 
-		SetSoundsMain();
+		// Use the new configuration-based sound setup
+		SetSoundsBasedOnConfiguration();
 
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			if (SoundsMain[i])
-			{
-#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
-				SoundsMain[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
-#else
-				SoundsMain[i]->bVirtualizeWhenSilent = true;
-#endif
-			}
-		}
-
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
-		{
-			if (SoundsMain[i])
-			{
-				LeftChannelsMain[i]->SetSound(SoundsMain[i]);
-				RightChannelsMain[i]->SetSound(SoundsMain[i]);
-			}
-		}
+        // INDIVIDUAL MONO CHANNELS MODE: Use separate mono files
+        SetupIndividualChannelPlayback();
 	}
 }
 
@@ -143,10 +129,27 @@ void UM1DecodeComponent::Play()
 {
 	if (isInited)
 	{
+		// For perfect synchronization, stop all first
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			LeftChannelsMain[i]->FadeIn(fadeInDuration);
-			RightChannelsMain[i]->FadeIn(fadeInDuration);
+			if (LeftChannelsMain[i]->GetSound())
+			{
+				LeftChannelsMain[i]->Stop();
+				RightChannelsMain[i]->Stop();
+			}
+		}
+		
+		// Small delay to ensure all components are stopped
+		FPlatformProcess::Sleep(0.01f);
+		
+		// Now start all components simultaneously
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
+		{
+			if (LeftChannelsMain[i]->GetSound())
+			{
+				LeftChannelsMain[i]->FadeIn(fadeInDuration);
+				RightChannelsMain[i]->FadeIn(fadeInDuration);
+			}
 		}
 	}
 
@@ -184,10 +187,33 @@ void UM1DecodeComponent::Seek(float time)
 {
 	if (isInited)
 	{
+		// For perfect synchronization, stop all first
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			LeftChannelsMain[i]->Play(time);
-			RightChannelsMain[i]->Play(time);
+			if (LeftChannelsMain[i]->GetSound())
+			{
+				LeftChannelsMain[i]->Stop();
+				RightChannelsMain[i]->Stop();
+			}
+		}
+		
+		// Small delay to ensure synchronization
+		FPlatformProcess::Sleep(0.005f);
+		
+		// Start all at the exact same time position
+		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
+		{
+			if (LeftChannelsMain[i]->GetSound())
+			{
+				LeftChannelsMain[i]->Play(time);
+				RightChannelsMain[i]->Play(time);
+			}
+		}
+		
+		if (Debug)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Blue, 
+				FString::Printf(TEXT("Component Synchronized seek to %.2fs"), time));
 		}
 	}
 }
@@ -396,19 +422,96 @@ void UM1DecodeComponent::SetVolumeMain(float volume)
 	if (isInited)
 	{
 		float masterGain = FMath::Max(MIN_SOUND_VOLUME, this->Volume * volume);
-		float newVolume = 0;
+		
+        // INDIVIDUAL MONO CHANNELS MODE: Apply per-channel spatial processing
+        SetVolumeIndividualChannels(masterGain);
+	}
+}
 
-		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
+void UM1DecodeComponent::SetVolumeIndividualChannels(float masterGain)
+{
+	// Individual channel processing - each channel gets its own spatial coefficient
+	float newVolume = 0;
+	
+	for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
+	{
+		newVolume = GainCoeffs[i * 2] * masterGain;
+		newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
+		LeftChannelsMain[i]->SetVolumeMultiplier(newVolume);
+
+		newVolume = GainCoeffs[i * 2 + 1] * masterGain;
+		newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
+		RightChannelsMain[i]->SetVolumeMultiplier(newVolume);
+	}
+	
+	if (Debug)
+	{
+		FString CoeffInfo = TEXT("Component Individual Channels: ");
+		for (int i = 0; i < FMath::Min(4, MAX_INPUT_CHANNELS); i++) // Show first 4 channels
 		{
-			newVolume = GainCoeffs[i * 2] * masterGain;
-			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
-			LeftChannelsMain[i]->SetVolumeMultiplier(newVolume);
+			CoeffInfo += FString::Printf(TEXT("Ch%d[L=%.2f,R=%.2f] "), i, GainCoeffs[i * 2], GainCoeffs[i * 2 + 1]);
+		}
+		GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Orange, CoeffInfo);
+	}
+}
 
-			newVolume = GainCoeffs[i * 2 + 1] * masterGain;
-			newVolume = FMath::Max(MIN_SOUND_VOLUME, newVolume);
-			RightChannelsMain[i]->SetVolumeMultiplier(newVolume);
+void UM1DecodeComponent::StopAllAudioComponents()
+{
+	// Stop all audio components to prevent overlapping playback
+	for (int i = 0; i < LeftChannelsMain.Num(); i++)
+	{
+		if (LeftChannelsMain[i])
+		{
+			LeftChannelsMain[i]->Stop();
+			LeftChannelsMain[i]->SetSound(nullptr);
 		}
 	}
+	
+	for (int i = 0; i < RightChannelsMain.Num(); i++)
+	{
+		if (RightChannelsMain[i])
+		{
+			RightChannelsMain[i]->Stop();
+			RightChannelsMain[i]->SetSound(nullptr);
+		}
+	}
+}
+
+void UM1DecodeComponent::SetupIndividualChannelPlayback()
+{
+	M1Common::PrintDebug("Component: Setting up individual mono channel playback");
+	
+	int validChannels = 0;
+	
+	for (int i = 0; i < FMath::Min(SoundsMain.Num(), MAX_INPUT_CHANNELS); i++)
+	{
+		if (SoundsMain[i])
+		{
+#if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 23) || ENGINE_MAJOR_VERSION == 5
+			SoundsMain[i]->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
+#else
+			SoundsMain[i]->bVirtualizeWhenSilent = true;
+#endif
+			
+			LeftChannelsMain[i]->SetSound(SoundsMain[i]);
+			RightChannelsMain[i]->SetSound(SoundsMain[i]);
+			validChannels++;
+		}
+		else
+		{
+			// Clear unused channels
+			LeftChannelsMain[i]->SetSound(nullptr);
+			RightChannelsMain[i]->SetSound(nullptr);
+		}
+	}
+	
+	if (Debug)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, 
+			FString::Printf(TEXT("Component Individual Channels: %d/%d assigned"), validChannels, GetRequiredChannelCount()));
+	}
+	
+	M1Common::PrintDebug(TCHAR_TO_ANSI(*FString::Printf(TEXT("Component individual channels: %d/%d assigned"), validChannels, GetRequiredChannelCount())));
 }
 
 void UM1DecodeComponent::SetSoundsMain()
@@ -461,28 +564,28 @@ void UM1DecodeComponent::SetSoundsBasedOnConfiguration()
 	// Clear existing sound assignments
 	ClearAllSounds();
 	
-	if (InputMode == MultichannelFile_Component)
+	int requiredChannels = GetRequiredChannelCount();
+	
+    // Use individual mono channels
+    for (int i = 0; i < requiredChannels; i++)
+    {
+        USoundBase* channelSound = GetChannelByIndex(i);
+        SoundsMain.Add(channelSound); // Add even if null to maintain proper indexing
+    }
+	
+	// Ensure we have the exact number of channels required
+	if (SoundsMain.Num() < requiredChannels)
 	{
-		// Use single multichannel file
-		if (MultichannelAudioFile)
+		// Pad with nulls if we don't have enough sounds
+		while (SoundsMain.Num() < requiredChannels)
 		{
-			SoundsMain.Add(MultichannelAudioFile);
+			SoundsMain.Add(nullptr);
 		}
 	}
-	else
+	else if (SoundsMain.Num() > requiredChannels)
 	{
-		// Use individual mono channels
-		int channelCount = GetRequiredChannelCount();
-		
-		// Add main channels
-		for (int i = 0; i < channelCount; i++)
-		{
-			USoundBase* channelSound = GetChannelByIndex(i);
-			if (channelSound)
-			{
-				SoundsMain.Add(channelSound);
-			}
-		}
+		// Trim excess sounds
+		SoundsMain.SetNum(requiredChannels);
 	}
 }
 

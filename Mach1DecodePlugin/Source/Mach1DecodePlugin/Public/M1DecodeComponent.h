@@ -31,14 +31,6 @@ enum EMach1DecodeModeComponent
 	Mach1DecodeMode_Spatial_14_Component = 2 UMETA(DisplayName = "Spatial 14-Channel")
 };
 
-// Input mode for Mach1 decode
-UENUM(BlueprintType)
-enum EMach1InputModeComponent
-{
-	IndividualMonoChannels_Component = 0 	UMETA(DisplayName = "Individual Mono Channels"),
-	MultichannelFile_Component = 1 		UMETA(DisplayName = "Single Multichannel File")
-};
-
 UCLASS(BlueprintType, Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MACH1DECODEPLUGIN_API UM1DecodeComponent : public USceneComponent
 {
@@ -75,6 +67,11 @@ protected:
 	int GetRequiredChannelCount();
 	void ClearAllSounds();
 	USoundBase* GetChannelByIndex(int index);
+
+	// Audio playback management
+	void StopAllAudioComponents();
+	void SetupIndividualChannelPlayback();
+	void SetVolumeIndividualChannels(float masterGain);
 
 	Mach1DecodePositional m1Positional;
 
@@ -125,73 +122,65 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Decode Configuration", DisplayName = "Decode Mode")
 		TEnumAsByte<EMach1DecodeModeComponent> DecodeMode = Mach1DecodeMode_Spatial_8_Component;
 
-	/** Choose input mode: Individual mono channels or single multichannel file */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Decode Configuration", DisplayName = "Input Mode")
-		TEnumAsByte<EMach1InputModeComponent> InputMode = IndividualMonoChannels_Component;
-
 	// ========== INDIVIDUAL MONO CHANNEL INPUTS ==========
 	
 	/** Channel 1 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 1", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 1")
 		USoundBase* Channel1;
 
 	/** Channel 2 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 2", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 2")
 		USoundBase* Channel2;
 
 	/** Channel 3 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 3", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 3")
 		USoundBase* Channel3;
 
 	/** Channel 4 - Used for all decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 4", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 4")
 		USoundBase* Channel4;
 
 	/** Channel 5 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 5", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && (DecodeMode == Mach1DecodeMode_Spatial_8_Component || DecodeMode == Mach1DecodeMode_Spatial_14_Component)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 5", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel5;
 
 	/** Channel 6 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 6", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && (DecodeMode == Mach1DecodeMode_Spatial_8_Component || DecodeMode == Mach1DecodeMode_Spatial_14_Component)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 6", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel6;
 
 	/** Channel 7 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 7", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && (DecodeMode == Mach1DecodeMode_Spatial_8_Component || DecodeMode == Mach1DecodeMode_Spatial_14_Component)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 7", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel7;
 
 	/** Channel 8 - Used for 8+, 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 8", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && (DecodeMode == Mach1DecodeMode_Spatial_8_Component || DecodeMode == Mach1DecodeMode_Spatial_14_Component)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 8", meta = (EditCondition = "DecodeMode == Mach1DecodeMode_Spatial_8 || DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel8;
 
 	/** Channel 9 - Used for 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 9", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && DecodeMode == Mach1DecodeMode_Spatial_14_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 9", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel9;
 
 	/** Channel 10 - Used for 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 10", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && DecodeMode == Mach1DecodeMode_Spatial_14_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 10", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel10;
 
 	/** Channel 11 - Used for 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 11", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && DecodeMode == Mach1DecodeMode_Spatial_14_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 11", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel11;
 
 	/** Channel 12 - Used for 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 12", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && DecodeMode == Mach1DecodeMode_Spatial_14_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 12", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel12;
 
 	/** Channel 13 - Used for 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 13", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && DecodeMode == Mach1DecodeMode_Spatial_14_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 13", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel13;
 
 	/** Channel 14 - Used for 14+ channel decode types */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 14", meta = (EditCondition = "InputMode == IndividualMonoChannels_Component && DecodeMode == Mach1DecodeMode_Spatial_14_Component"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Mono Channels", DisplayName = "Channel 14", meta = (EditCondition = "InputMode == IndividualMonoChannels && DecodeMode == Mach1DecodeMode_Spatial_14"))
 		USoundBase* Channel14;
 
-	// ========== MULTICHANNEL FILE INPUT ==========
-
-	/** Single multichannel audio file containing all Mach1 channels */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mach1 Multichannel File", DisplayName = "Multichannel Audio File", meta = (EditCondition = "InputMode == MultichannelFile_Component"))
-		USoundBase* MultichannelAudioFile;
+	// ====================
 
 	UFUNCTION(BlueprintCallable, Category = "Mach1Spatial Functions")
 		void Play();
