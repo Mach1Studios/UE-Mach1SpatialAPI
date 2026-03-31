@@ -8,6 +8,12 @@
 
 #include "Mach1DecodePluginPrivatePCH.h"
 
+#if ENGINE_MAJOR_VERSION >= 5
+#define M1_AUDIOCOMP_HAS_SOUND(AudioComp) ((AudioComp) && (AudioComp)->GetSound())
+#else
+#define M1_AUDIOCOMP_HAS_SOUND(AudioComp) ((AudioComp) && (AudioComp)->Sound)
+#endif
+
 #if (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 18) || ENGINE_MAJOR_VERSION == 5
 #include "HeadMountedDisplay.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -142,7 +148,7 @@ void AM1DecodeActor::Play()
 		// First, prepare all components
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			if (LeftChannelsMain[i]->GetSound())
+			if (M1_AUDIOCOMP_HAS_SOUND(LeftChannelsMain[i]))
 			{
 				LeftChannelsMain[i]->Stop();
 				RightChannelsMain[i]->Stop();
@@ -155,7 +161,7 @@ void AM1DecodeActor::Play()
 		// Now start all components simultaneously
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			if (LeftChannelsMain[i]->GetSound())
+			if (M1_AUDIOCOMP_HAS_SOUND(LeftChannelsMain[i]))
 			{
 				LeftChannelsMain[i]->FadeIn(fadeInDuration);
 				RightChannelsMain[i]->FadeIn(fadeInDuration);
@@ -206,7 +212,7 @@ void AM1DecodeActor::Seek(float timeInSeconds)
 		// For perfect synchronization, stop all first, then start all at the same time point
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			if (LeftChannelsMain[i]->GetSound())
+			if (M1_AUDIOCOMP_HAS_SOUND(LeftChannelsMain[i]))
 			{
 				LeftChannelsMain[i]->Stop();
 				RightChannelsMain[i]->Stop();
@@ -219,7 +225,7 @@ void AM1DecodeActor::Seek(float timeInSeconds)
 		// Start all at the exact same time position
 		for (int i = 0; i < MAX_INPUT_CHANNELS; i++)
 		{
-			if (LeftChannelsMain[i]->GetSound())
+			if (M1_AUDIOCOMP_HAS_SOUND(LeftChannelsMain[i]))
 			{
 				LeftChannelsMain[i]->Play(timeInSeconds);
 				RightChannelsMain[i]->Play(timeInSeconds);
@@ -393,7 +399,8 @@ void AM1DecodeActor::Tick(float DeltaTime)
 					m1Positional.setAttenuationCurve(attenuationCurve ? attenuationCurve->GetFloatValue(m1Positional.getDist()) : 1);
 				}
 
-				float coeffs[MAX_INPUT_CHANNELS * 2];
+				std::vector<float> coeffs;
+				coeffs.resize(MAX_INPUT_CHANNELS * 2);
 				m1Positional.getCoefficients(coeffs);
 				for (int i = 0; i < MAX_INPUT_CHANNELS * 2; i++)
 				{
